@@ -8,7 +8,9 @@ import 'package:movewell/screens/forgot_password_screen.dart';
 import 'package:movewell/screens/home_screen.dart';
 import 'package:movewell/screens/notification_screen.dart';
 import 'package:movewell/screens/profile_view_screen.dart';
+import 'package:movewell/screens/search_screen.dart';
 import 'package:movewell/screens/settings_screen.dart';
+import 'package:movewell/screens/workout_screen.dart';
 import 'package:movewell/screens/setup/setup_flow_navigator.dart';
 
 void main() {
@@ -367,7 +369,84 @@ void main() {
 
     expect(find.text('Log Out'), findsOneWidget);
   });
+
+  testWidgets('SearchScreen renders search bar, filters, recent and popular searches', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SearchScreen(),
+      ),
+    );
+
+    expect(find.text('Search'), findsOneWidget);
+    expect(find.text('Find workouts, articles, videos and more.'), findsOneWidget);
+    expect(find.text('Search for workouts, nutrition, articles...'), findsOneWidget);
+
+    // Categories
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Workout'), findsWidgets);
+    expect(find.text('Nutrition'), findsWidgets);
+    expect(find.text('Articles'), findsOneWidget);
+    expect(find.text('Videos'), findsOneWidget);
+    expect(find.text('Community'), findsOneWidget);
+
+    // Recent & Popular Searches
+    expect(find.text('Recent Searches'), findsOneWidget);
+    expect(find.text('full body workout'), findsOneWidget);
+    expect(find.text('protein rich meals'), findsOneWidget);
+    expect(find.text('Popular Searches'), findsOneWidget);
+    expect(find.text('home workout'), findsOneWidget);
+    expect(find.text('weight loss'), findsOneWidget);
+
+    // Recommended Items
+    expect(find.text('Recommended for You'), findsOneWidget);
+    expect(find.text('Full Body Strength Workout'), findsOneWidget);
+    expect(find.text('5 High-Protein Meals'), findsOneWidget);
+    expect(find.text('Morning Yoga for a Better You'), findsOneWidget);
+  });
+
+  testWidgets('WorkoutScreen renders tabs, hero card, quick start, and routines', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: WorkoutScreen(),
+      ),
+    );
+
+    expect(find.text('Workout'), findsOneWidget);
+    expect(find.text('Move stronger, every day.'), findsOneWidget);
+
+    // Tabs
+    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Preset Routines'), findsWidgets);
+    expect(find.text('Create Routine'), findsOneWidget);
+    expect(find.text('By Level'), findsOneWidget);
+
+    // Today's Workout Hero
+    expect(find.text("TODAY'S WORKOUT"), findsOneWidget);
+    expect(find.text('Full Body Strength'), findsWidgets);
+    expect(find.text('Start Workout'), findsOneWidget);
+
+    // Quick Start
+    expect(find.text('Quick Start'), findsOneWidget);
+    expect(find.text('Strength'), findsOneWidget);
+    expect(find.text('Cardio'), findsOneWidget);
+    expect(find.text('Yoga'), findsOneWidget);
+    expect(find.text('Core'), findsOneWidget);
+
+    // Preset Routines
+    expect(find.text('Morning Mobility'), findsOneWidget);
+    expect(find.text('HIIT Blast'), findsOneWidget);
+
+    // Create Your Own Routine
+    expect(find.text('Make Your Own Routine'), findsOneWidget);
+
+    // Browse by Level
+    expect(find.text('Browse by Level'), findsOneWidget);
+    expect(find.text('Beginner'), findsWidgets);
+    expect(find.text('Intermediate'), findsWidgets);
+    expect(find.text('Advanced'), findsWidgets);
+  });
 }
+
 
 
 

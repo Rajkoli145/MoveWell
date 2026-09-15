@@ -4,6 +4,8 @@ import '../models/user_profile.dart';
 import '../palette.dart';
 import 'notification_screen.dart';
 import 'profile_view_screen.dart';
+import 'search_screen.dart';
+import 'workout_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -532,9 +534,37 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-          // Notification Bell & Avatar
+          // Top Actions: Search, Notification Bell & Avatar
           Row(
             children: [
+              // Search Icon Button
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => SearchScreen(
+                        onBack: () => Navigator.pop(context),
+                      ),
+                    ),
+                  );
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE8F2FA),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.search_rounded,
+                    size: 22,
+                    color: Palette.ink,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
               // Notification Bell with Badge
               GestureDetector(
                 onTap: () {
@@ -579,7 +609,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
 
               // Clean User Profile Avatar (Tappable to open ProfileViewScreen)
               GestureDetector(
@@ -1394,7 +1424,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        if (index == 3) {
+        if (index == 1) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (context) => WorkoutScreen(
+                onBack: () => Navigator.pop(context),
+              ),
+            ),
+          );
+        } else if (index == 3) {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (context) => ProfileViewScreen(
