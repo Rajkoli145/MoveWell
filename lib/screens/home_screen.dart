@@ -1101,46 +1101,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 7),
 
-                // Start Workout Button with MoveWell Arrow
-                GestureDetector(
+                // Start Workout Interactive SlideActionPillButton (Draggable & Hold-to-slide)
+                SlideActionPillButton(
+                  height: 36,
+                  fontSize: 12,
+                  label: 'Start Workout',
                   onTap: widget.onStartWorkout ?? _showWorkoutStartSheet,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E2430),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Start Workout',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFA2D9FC),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 13,
-                              color: Color(0xFF101419),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ],
             ),

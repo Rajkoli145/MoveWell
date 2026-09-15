@@ -218,11 +218,13 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   @override
   Widget build(BuildContext context) {
     final double btnH = widget.height;
-    final double knobSize = btnH - 12.0;
+    final double padding = btnH < 44.0 ? 4.0 : 6.0;
+    final double knobSize = btnH - (padding * 2);
+    final double iconSize = (knobSize * 0.52).clamp(12.0, 22.0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double maxDrag = (constraints.maxWidth - knobSize - 12.0).clamp(10.0, 600.0);
+        final double maxDrag = (constraints.maxWidth - knobSize - (padding * 2)).clamp(10.0, 600.0);
 
         return Listener(
           behavior: HitTestBehavior.opaque,
@@ -251,7 +253,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
                 ValueListenableBuilder<double>(
                   valueListenable: _dragProgress,
                   builder: (context, progress, _) {
-                    final trackWidth = (6.0 + knobSize + (progress * maxDrag)).clamp(knobSize, constraints.maxWidth);
+                    final trackWidth = (padding + knobSize + (progress * maxDrag)).clamp(knobSize, constraints.maxWidth);
                     return Container(
                       width: trackWidth,
                       height: btnH,
@@ -294,8 +296,8 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
 
                 // 3. Crisp, Grounded Draggable Knob in MoveWell Sky Blue
                 Positioned(
-                  left: 6.0,
-                  top: (btnH - knobSize) / 2,
+                  left: padding,
+                  top: padding,
                   child: ValueListenableBuilder<double>(
                     valueListenable: _dragProgress,
                     builder: (context, progress, _) {
@@ -322,7 +324,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
                                 child: Icon(
                                   completed ? Icons.check_rounded : Icons.arrow_forward_rounded,
                                   key: ValueKey(completed ? 'check' : 'arrow'),
-                                  size: 19,
+                                  size: iconSize,
                                   color: widget.iconColor,
                                 ),
                               ),
