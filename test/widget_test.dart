@@ -209,15 +209,12 @@ void main() {
     expect(find.text('LIVES HERE'), findsOneWidget);
     expect(find.text('Small steps today\nlead to big results.'), findsOneWidget);
 
-    // 3. Top Menu & Metrics
-    expect(find.text('Workout'), findsWidgets);
-    expect(find.text('Nutrition'), findsWidgets);
-    expect(find.text('Progress'), findsWidgets);
-    expect(find.text('Community'), findsWidgets);
+    // 3. Metrics
     expect(find.text('4320'), findsOneWidget);
     expect(find.text('Steps'), findsOneWidget);
     expect(find.text('Water'), findsOneWidget);
     expect(find.text('Calories'), findsOneWidget);
+    expect(find.text('Workout'), findsOneWidget);
 
     // 4. Recommended Workout
     expect(find.text('Recommended for you'), findsOneWidget);

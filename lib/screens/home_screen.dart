@@ -377,11 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Greeting & Progress Stamp
           _buildGreetingSection(),
-          const SizedBox(height: 16),
-
-          // Top Modules Shortcut Menu (Workout, Progress, Nutrition, Community)
-          _buildTopModulesMenu(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Daily Metrics Stats Card (Steps, Water, Calories, Workout)
           _buildMetricsCard(),
@@ -769,101 +765,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Top Menu / Core Content Modules: 7.1 Workout, 7.2 Progress, 7.3 Nutrition, 7.4 Community
-  // ---------------------------------------------------------------------------
-  Widget _buildTopModulesMenu() {
-    final modules = [
-      {
-        'title': 'Workout',
-        'icon': Icons.fitness_center_rounded,
-        'color': const Color(0xFF2563EB),
-        'bg': const Color(0xFFEFF6FF),
-        'onTap': () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (context) => WorkoutScreen(onBack: () => Navigator.pop(context)),
-              ),
-            ),
-      },
-      {
-        'title': 'Nutrition',
-        'icon': Icons.restaurant_rounded,
-        'color': const Color(0xFF16A34A),
-        'bg': const Color(0xFFF0FDF4),
-        'onTap': () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (context) => NutritionScreen(onBack: () => Navigator.pop(context)),
-              ),
-            ),
-      },
-      {
-        'title': 'Progress',
-        'icon': Icons.bar_chart_rounded,
-        'color': const Color(0xFF9333EA),
-        'bg': const Color(0xFFFAF5FF),
-        'onTap': () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (context) => ProfileViewScreen(
-                  onBack: () => Navigator.pop(context),
-                  onHomeTap: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-      },
-      {
-        'title': 'Community',
-        'icon': Icons.groups_rounded,
-        'color': const Color(0xFFEA580C),
-        'bg': const Color(0xFFFFEDD5),
-        'onTap': () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (context) => const SearchScreen(initialCategory: 'Community'),
-              ),
-            ),
-      },
-    ];
-
-    return Row(
-      children: modules.map((mod) {
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: InkWell(
-              onTap: mod['onTap'] as VoidCallback,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                decoration: BoxDecoration(
-                  color: mod['bg'] as Color,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: (mod['color'] as Color).withValues(alpha: 0.15),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(mod['icon'] as IconData, size: 20, color: mod['color'] as Color),
-                    const SizedBox(height: 4),
-                    Text(
-                      mod['title'] as String,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 
