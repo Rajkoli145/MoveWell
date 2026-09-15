@@ -218,9 +218,9 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   @override
   Widget build(BuildContext context) {
     final double btnH = widget.height;
-    final double padding = btnH < 44.0 ? 4.0 : 6.0;
+    final double padding = btnH <= 36.0 ? 3.0 : (btnH < 44.0 ? 4.0 : 6.0);
     final double knobSize = btnH - (padding * 2);
-    final double iconSize = (knobSize * 0.52).clamp(12.0, 22.0);
+    final double iconSize = (knobSize * 0.52).clamp(11.0, 22.0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -279,7 +279,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(width: knobSize * 0.7),
+                        SizedBox(width: knobSize * 0.4),
                         Text(
                           widget.label,
                           style: GoogleFonts.plusJakartaSans(

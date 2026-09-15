@@ -1103,8 +1103,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Start Workout Interactive SlideActionPillButton (Draggable & Hold-to-slide)
                 SlideActionPillButton(
-                  height: 36,
-                  fontSize: 12,
+                  height: 32,
+                  fontSize: 11,
                   label: 'Start Workout',
                   onTap: widget.onStartWorkout ?? _showWorkoutStartSheet,
                 ),
