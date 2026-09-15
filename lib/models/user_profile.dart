@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import '../palette.dart';
 
 class UserProfile {
@@ -18,6 +19,7 @@ class UserProfile {
   String language;
   String theme;
   bool notificationsEnabled;
+  bool onboardingComplete;
 
   UserProfile({
     this.fullName = 'Raj Koli',
@@ -36,7 +38,52 @@ class UserProfile {
     this.language = 'English',
     this.theme = 'Light',
     this.notificationsEnabled = true,
+    this.onboardingComplete = false,
   });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final remoteAvatar = json['avatarPath'] as String?;
+    return UserProfile(
+      fullName: json['fullName'] as String? ?? 'MoveWell User',
+      email: json['email'] as String? ?? '',
+      subtitle: json['subtitle'] as String? ?? 'Stay consistent, stay better.',
+      avatarPath: remoteAvatar?.isNotEmpty == true
+          ? remoteAvatar!
+          : AppAssets.avatar,
+      dateOfBirth: json['dateOfBirth'] as String? ?? '',
+      gender: json['gender'] as String? ?? '',
+      height: (json['height'] as num?)?.round() ?? 172,
+      heightUnit: json['heightUnit'] as String? ?? 'cm',
+      weight: (json['weight'] as num?)?.toDouble() ?? 60,
+      weightUnit: json['weightUnit'] as String? ?? 'kg',
+      age: (json['age'] as num?)?.round() ?? 25,
+      activityLevel: json['activityLevel'] as String? ?? '',
+      goal: json['goal'] as String? ?? '',
+      language: json['language'] as String? ?? 'English',
+      theme: json['theme'] as String? ?? 'Light',
+      notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
+      onboardingComplete: json['onboardingComplete'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'fullName': fullName,
+    'subtitle': subtitle,
+    'avatarPath': avatarPath,
+    'dateOfBirth': dateOfBirth,
+    'gender': gender,
+    'height': height,
+    'heightUnit': heightUnit,
+    'weight': weight,
+    'weightUnit': weightUnit,
+    'age': age,
+    'activityLevel': activityLevel,
+    'goal': goal,
+    'language': language,
+    'theme': theme,
+    'notificationsEnabled': notificationsEnabled,
+    'onboardingComplete': onboardingComplete,
+  };
 
   UserProfile copyWith({
     String? fullName,
@@ -55,6 +102,7 @@ class UserProfile {
     String? language,
     String? theme,
     bool? notificationsEnabled,
+    bool? onboardingComplete,
   }) {
     return UserProfile(
       fullName: fullName ?? this.fullName,
@@ -73,6 +121,7 @@ class UserProfile {
       language: language ?? this.language,
       theme: theme ?? this.theme,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      onboardingComplete: onboardingComplete ?? this.onboardingComplete,
     );
   }
 }
@@ -109,6 +158,7 @@ class UserProfileNotifier extends ChangeNotifier {
     String? language,
     String? theme,
     bool? notificationsEnabled,
+    bool? onboardingComplete,
   }) {
     _profile = _profile.copyWith(
       fullName: fullName,
@@ -127,6 +177,7 @@ class UserProfileNotifier extends ChangeNotifier {
       language: language,
       theme: theme,
       notificationsEnabled: notificationsEnabled,
+      onboardingComplete: onboardingComplete,
     );
     notifyListeners();
   }

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/user_profile.dart';
+import '../models/workout_plan.dart';
 import '../palette.dart';
+import '../services/activity_api.dart';
 import 'notification_screen.dart';
 import 'nutrition_screen.dart';
 import 'profile_view_screen.dart';
 import 'search_screen.dart';
 import 'workout_screen.dart';
+import 'favorites_screen.dart';
+import 'challenges_screen.dart';
+import 'workout_session_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -16,6 +22,7 @@ class HomeScreen extends StatefulWidget {
     this.onViewAllRecommended,
     this.onViewAllChallenges,
     this.onViewAllArticles,
+    this.onLogout,
   });
 
   final String userName;
@@ -23,6 +30,7 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback? onViewAllRecommended;
   final VoidCallback? onViewAllChallenges;
   final VoidCallback? onViewAllArticles;
+  final VoidCallback? onLogout;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -31,15 +39,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final UserProfileNotifier _profileNotifier = UserProfileNotifier.instance;
   int _currentNavIndex = 0;
-  int _waterGlasses = 3;
+  int _waterGlasses = 0;
   int _dailySteps = 4320;
   final int _caloriesBurned = 1200;
-  int _challengeDays = 2;
+  int _challengeDays = 0;
 
   @override
   void initState() {
     super.initState();
     _profileNotifier.addListener(_onProfileUpdate);
+    _loadActivity();
   }
 
   @override
@@ -50,6 +59,110 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onProfileUpdate() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadActivity() async {
+    try {
+      final summary = await ActivityApi.instance.dashboard();
+      if (!mounted) return;
+      setState(() {
+        _waterGlasses = summary.waterGlasses;
+        _challengeDays =
+            summary.challenges
+                .where((c) => c.id == 'move-5-days')
+                .firstOrNull
+                ?.progress ??
+            0;
+      });
+    } catch (_) {
+      // The dashboard stays usable if the backend is temporarily offline.
+    }
+  }
+
+  void _openWorkoutLibrary() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => WorkoutScreen(
+          initialTab: 'Preset Routines',
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    );
+  }
+
+  void _showAllChallenges() => Navigator.of(context)
+      .push(MaterialPageRoute<void>(builder: (_) => const ChallengesScreen()));
+
+  void _showAllArticles() => _showContentList('Articles & Tips', const [
+    (
+      '5 Simple Nutrition Tips for Better Energy',
+      'Practical food habits for busy days.',
+      Icons.restaurant_rounded,
+      Color(0xFF16A34A),
+    ),
+    (
+      'How to Build a Consistent Routine',
+      'Small systems that make movement stick.',
+      Icons.calendar_month_rounded,
+      Color(0xFF2563EB),
+    ),
+    (
+      'Recovery Is Training Too',
+      'Why rest helps your strength progress.',
+      Icons.self_improvement_rounded,
+      Color(0xFF9333EA),
+    ),
+  ]);
+
+  void _showContentList(
+    String title,
+    List<(String, String, IconData, Color)> items,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...items.map(
+                (item) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: item.$4.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(item.$3, color: item.$4),
+                  ),
+                  title: Text(
+                    item.$1,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(item.$2),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -131,9 +244,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 10),
               _buildExerciseItem('1. Warm Up & Joint Mobility', '5 mins'),
-              _buildExerciseItem('2. Bodyweight Lunges & Squats', '3 sets × 12 reps'),
+              _buildExerciseItem(
+                '2. Bodyweight Lunges & Squats',
+                '3 sets × 12 reps',
+              ),
               _buildExerciseItem('3. Dumbbell Push Press', '3 sets × 10 reps'),
-              _buildExerciseItem('4. Core Plank & Mountain Climbers', '3 sets × 45 secs'),
+              _buildExerciseItem(
+                '4. Core Plank & Mountain Climbers',
+                '3 sets × 45 secs',
+              ),
               _buildExerciseItem('5. Cool Down & Full Body Stretch', '5 mins'),
               const SizedBox(height: 22),
               SizedBox(
@@ -148,15 +267,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Starting Full Body Strength workout! Let’s crush it 💪',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                        ),
-                        backgroundColor: const Color(0xFF1E2430),
-                      ),
-                    );
+                    Navigator.of(context)
+                        .push(
+                          MaterialPageRoute<bool>(
+                            builder: (_) => const WorkoutSessionScreen(
+                              plan: WorkoutPlan(
+                                title: 'Full Body Strength',
+                                level: 'Intermediate',
+                                durationMinutes: 30,
+                                exercises: [
+                                  'Warm Up & Joint Mobility — 5 mins',
+                                  'Bodyweight Lunges & Squats — 3 sets × 12 reps',
+                                  'Dumbbell Push Press — 3 sets × 10 reps',
+                                  'Core Plank & Mountain Climbers — 3 sets × 45 secs',
+                                  'Cool Down & Full Body Stretch — 5 mins',
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                        .then((completed) {
+                          if (completed == true) _loadActivity();
+                        });
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -170,7 +302,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                      const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ],
                   ),
                 ),
@@ -253,7 +389,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.menu_book_outlined, size: 14, color: Color(0xFF7B91A6)),
+                      const Icon(
+                        Icons.menu_book_outlined,
+                        size: 14,
+                        color: Color(0xFF7B91A6),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         readTime,
@@ -349,12 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // 3. Floating Bottom Navigation Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildBottomNavBar(),
-          ),
+          Positioned(left: 0, right: 0, bottom: 0, child: _buildBottomNavBar()),
         ],
       ),
     );
@@ -381,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Recommended For You Section
           _buildSectionHeader(
             title: "Recommended for you",
-            onViewAll: widget.onViewAllRecommended ?? _showWorkoutStartSheet,
+            onViewAll: widget.onViewAllRecommended ?? _openWorkoutLibrary,
           ),
           const SizedBox(height: 12),
           _buildRecommendedCard(),
@@ -390,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Weekly Challenge Section
           _buildSectionHeader(
             title: "Weekly Challenge",
-            onViewAll: widget.onViewAllChallenges ?? () {},
+            onViewAll: widget.onViewAllChallenges ?? _showAllChallenges,
           ),
           const SizedBox(height: 12),
           _buildWeeklyChallengeCard(),
@@ -399,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Articles & Tips Section
           _buildSectionHeader(
             title: "Articles & Tips",
-            onViewAll: widget.onViewAllArticles ?? () {},
+            onViewAll: widget.onViewAllArticles ?? _showAllArticles,
           ),
           const SizedBox(height: 12),
           _buildArticlesList(),
@@ -413,7 +548,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // Tab Placeholder for Resources / Favorite / Support
   // ---------------------------------------------------------------------------
   Widget _buildTabPlaceholder(int index) {
-    final titles = ['Home', 'Resources & Workouts', 'Favorite Workouts', 'Support & Help'];
+    final titles = [
+      'Home',
+      'Resources & Workouts',
+      'Favorite Workouts',
+      'Support & Help',
+    ];
     final subtitles = [
       '',
       'Explore guided strength training, stretching routines, and personalized plans.',
@@ -440,7 +580,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Color(0xFFE0F2FE),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icons[index], size: 36, color: const Color(0xFF2563EB)),
+              child: Icon(
+                icons[index],
+                size: 36,
+                color: const Color(0xFF2563EB),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -465,8 +609,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E2430),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               onPressed: () => setState(() => _currentNavIndex = 0),
               child: Text(
@@ -497,11 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // MoveWell Logo & Wordmark
           Row(
             children: [
-              Image.asset(
-                AppAssets.logo,
-                width: 38,
-                height: 38,
-              ),
+              Image.asset(AppAssets.logo, width: 38, height: 38),
               const SizedBox(width: 9),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,9 +683,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (context) => SearchScreen(
-                        onBack: () => Navigator.pop(context),
-                      ),
+                      builder: (context) =>
+                          SearchScreen(onBack: () => Navigator.pop(context)),
                     ),
                   );
                 },
@@ -615,6 +759,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       builder: (context) => ProfileViewScreen(
                         onBack: () => Navigator.pop(context),
                         onHomeTap: () => Navigator.pop(context),
+                        onLogout: () {
+                          Navigator.pop(context);
+                          widget.onLogout?.call();
+                        },
                       ),
                     ),
                   );
@@ -631,14 +779,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      _profileNotifier.profile.avatarPath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFFD6EDFC),
-                        child: const Icon(Icons.person, color: Palette.ink),
-                      ),
-                    ),
+                    child:
+                        _profileNotifier.profile.avatarPath.startsWith('http')
+                        ? Image.network(
+                            _profileNotifier.profile.avatarPath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              color: const Color(0xFFD6EDFC),
+                              child: const Icon(
+                                Icons.person,
+                                color: Palette.ink,
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            _profileNotifier.profile.avatarPath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              color: const Color(0xFFD6EDFC),
+                              child: const Icon(
+                                Icons.person,
+                                color: Palette.ink,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -653,7 +817,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Greeting Section
   // ---------------------------------------------------------------------------
   Widget _buildGreetingSection() {
-    final displayName = _profileNotifier.profile.fullName.trim().split(' ').first;
+    final displayName = _profileNotifier.profile.fullName
+        .trim()
+        .split(' ')
+        .first;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -686,7 +853,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     TextSpan(
-                      text: displayName.isNotEmpty ? displayName : widget.userName,
+                      text: displayName.isNotEmpty
+                          ? displayName
+                          : widget.userName,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
@@ -772,10 +941,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFE5EEF6),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE5EEF6), width: 1.0),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.03),
@@ -808,17 +974,27 @@ class _HomeScreenState extends State<HomeScreen> {
               value: '$_waterGlasses',
               label: 'Water',
               subtext: 'of 8 glasses',
-              onTap: () {
-                setState(() {
-                  _waterGlasses = (_waterGlasses % 8) + 1;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Logged 1 glass of water ($_waterGlasses/8) 💧'),
-                    duration: const Duration(milliseconds: 900),
-                    backgroundColor: const Color(0xFF0284C7),
-                  ),
-                );
+              onTap: () async {
+                final next = _waterGlasses >= 8 ? 0 : _waterGlasses + 1;
+                setState(() => _waterGlasses = next);
+                try {
+                  await ActivityApi.instance.setWater(next);
+                } catch (_) {
+                  if (mounted) _loadActivity();
+                }
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        next == 0
+                            ? 'Water log reset for today.'
+                            : 'Logged 1 glass of water ($next/8) 💧',
+                      ),
+                      duration: const Duration(milliseconds: 900),
+                      backgroundColor: const Color(0xFF0284C7),
+                    ),
+                  );
+                }
               },
             ),
           ),
@@ -860,11 +1036,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVerticalDivider() {
-    return Container(
-      width: 1.0,
-      height: 48,
-      color: const Color(0xFFEDF3F8),
-    );
+    return Container(width: 1.0, height: 48, color: const Color(0xFFEDF3F8));
   }
 
   Widget _buildMetricColumn({
@@ -885,10 +1057,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             child: Icon(icon, size: 17, color: iconColor),
           ),
           const SizedBox(height: 7),
@@ -926,10 +1095,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   // Section Header
   // ---------------------------------------------------------------------------
-  Widget _buildSectionHeader({
-    required String title,
-    VoidCallback? onViewAll,
-  }) {
+  Widget _buildSectionHeader({required String title, VoidCallback? onViewAll}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -978,10 +1144,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFE5EEF6),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE5EEF6), width: 1.0),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.03),
@@ -1013,7 +1176,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Pill Tag
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE0F2FE),
                     borderRadius: BorderRadius.circular(7),
@@ -1067,7 +1233,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 6),
                       const Text(
                         '•',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF7B91A6)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF7B91A6),
+                        ),
                       ),
                       const SizedBox(width: 6),
                       const Icon(
@@ -1129,20 +1298,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildWeeklyChallengeCard() {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _challengeDays = (_challengeDays % 5) + 1;
-        });
-      },
+      onTap: _showAllChallenges,
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           color: const Color(0xFFEBF6FD),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: const Color(0xFFDCEEFB),
-            width: 1.0,
-          ),
+          border: Border.all(color: const Color(0xFFDCEEFB), width: 1.0),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -1199,7 +1361,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             final isFilled = index < _challengeDays;
                             return Expanded(
                               child: Container(
-                                margin: EdgeInsets.only(right: index == 4 ? 0 : 5),
+                                margin: EdgeInsets.only(
+                                  right: index == 4 ? 0 : 5,
+                                ),
                                 height: 5.0,
                                 decoration: BoxDecoration(
                                   color: isFilled
@@ -1242,11 +1406,7 @@ class _HomeScreenState extends State<HomeScreen> {
         '5 Simple Nutrition\nTips for Better Energy',
         '5 min read',
       ),
-      (
-        AppAssets.articleConsistency,
-        'The Power of\nConsistency',
-        '4 min read',
-      ),
+      (AppAssets.articleConsistency, 'The Power of\nConsistency', '4 min read'),
       (
         AppAssets.articleRoutine,
         'How to Build a\nSustainable Routine',
@@ -1269,10 +1429,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: const Color(0xFFE5EEF6),
-                  width: 1.0,
-                ),
+                border: Border.all(color: const Color(0xFFE5EEF6), width: 1.0),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF0F172A).withValues(alpha: 0.02),
@@ -1362,11 +1519,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(
-                index: 0,
-                icon: Icons.home_rounded,
-                label: 'Home',
-              ),
+              _buildNavItem(index: 0, icon: Icons.home_rounded, label: 'Home'),
               _buildNavItem(
                 index: 1,
                 icon: Icons.auto_stories_outlined,
@@ -1401,9 +1554,15 @@ class _HomeScreenState extends State<HomeScreen> {
         if (index == 1) {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (context) => WorkoutScreen(
-                onBack: () => Navigator.pop(context),
-              ),
+              builder: (context) =>
+                  WorkoutScreen(onBack: () => Navigator.pop(context)),
+            ),
+          );
+        } else if (index == 2) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (context) =>
+                  FavoritesScreen(onBack: () => Navigator.pop(context)),
             ),
           );
         } else if (index == 3) {
@@ -1412,6 +1571,10 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context) => ProfileViewScreen(
                 onBack: () => Navigator.pop(context),
                 onHomeTap: () => Navigator.pop(context),
+                onLogout: () {
+                  Navigator.pop(context);
+                  widget.onLogout?.call();
+                },
               ),
             ),
           );
@@ -1432,7 +1595,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Icon(
               icon,
               size: 22,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF7B91A6),
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF7B91A6),
             ),
           ),
           const SizedBox(height: 2),
@@ -1441,7 +1606,9 @@ class _HomeScreenState extends State<HomeScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF7B91A6),
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF7B91A6),
             ),
           ),
         ],
@@ -1449,4 +1616,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-

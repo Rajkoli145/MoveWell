@@ -32,6 +32,12 @@ class AppAssets {
   static const forgotPasswordHero = 'assets/images/forgot_password_hero.png';
   static const avatar = 'assets/images/avatar.png';
   static const workoutHero = 'assets/images/workout_hero.png';
+  static const exerciseGuide = 'assets/references/artwork/girl.png';
+  static const exercisesLevelGrid = 'assets/images/exercises_level_grid.png';
+  static const exercisesCardioYogaGrid =
+      'assets/images/exercises_cardio_yoga_grid.png';
+  static const exercisesCoreMobilityGrid =
+      'assets/images/exercises_core_mobility_grid.png';
   static const articleNutrition = 'assets/images/article_nutrition.png';
   static const articleConsistency = 'assets/images/article_consistency.png';
   static const articleRoutine = 'assets/images/article_routine.png';
@@ -151,7 +157,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   }
 
   void _onPointerDown(PointerDownEvent event) {
-    if (_navigating) return;
+    if (!mounted || _navigating) return;
     _resetTimer?.cancel();
     _springController.stop();
     _springAnim = null;
@@ -166,7 +172,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   }
 
   void _onPointerMove(PointerMoveEvent event, double maxDrag) {
-    if (_navigating) return;
+    if (!mounted || _navigating) return;
     final deltaX = event.position.dx - _pointerStartX;
     if (deltaX.abs() > 3.0) {
       _holdController.stop();
@@ -178,7 +184,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   }
 
   void _onPointerUpOrCancel() {
-    if (_navigating) return;
+    if (!mounted || _navigating) return;
     _holdController.stop();
 
     if (_dragProgress.value >= 0.60) {
@@ -189,7 +195,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   }
 
   void _triggerComplete() {
-    if (_navigating) return;
+    if (!mounted || _navigating) return;
     _navigating = true;
     _holdController.stop();
     _springController.stop();
@@ -208,10 +214,10 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   }
 
   void _resetToStart() {
-    _springAnim = Tween<double>(
-      begin: _dragProgress.value,
-      end: 0.0,
-    ).animate(CurvedAnimation(parent: _springController, curve: Curves.easeOutQuad));
+    if (!mounted) return;
+    _springAnim = Tween<double>(begin: _dragProgress.value, end: 0.0).animate(
+      CurvedAnimation(parent: _springController, curve: Curves.easeOutQuad),
+    );
 
     _springController.forward(from: 0.0);
   }
@@ -225,7 +231,8 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double maxDrag = (constraints.maxWidth - knobSize - (padding * 2)).clamp(10.0, 600.0);
+        final double maxDrag = (constraints.maxWidth - knobSize - (padding * 2))
+            .clamp(10.0, 600.0);
 
         return Listener(
           behavior: HitTestBehavior.opaque,
@@ -254,12 +261,18 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
                 ValueListenableBuilder<double>(
                   valueListenable: _dragProgress,
                   builder: (context, progress, _) {
-                    final trackWidth = (padding + knobSize + (progress * maxDrag)).clamp(knobSize, constraints.maxWidth);
+                    final trackWidth =
+                        (padding + knobSize + (progress * maxDrag)).clamp(
+                          knobSize,
+                          constraints.maxWidth,
+                        );
                     return Container(
                       width: trackWidth,
                       height: btnH,
                       decoration: BoxDecoration(
-                        color: widget.knobColor.withValues(alpha: (0.10 + 0.15 * progress).clamp(0.0, 1.0)),
+                        color: widget.knobColor.withValues(
+                          alpha: (0.10 + 0.15 * progress).clamp(0.0, 1.0),
+                        ),
                         borderRadius: BorderRadius.circular(btnH / 2),
                       ),
                     );
@@ -271,10 +284,7 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
                   valueListenable: _dragProgress,
                   builder: (context, progress, child) {
                     final opacity = (1.0 - progress * 1.6).clamp(0.0, 1.0);
-                    return Opacity(
-                      opacity: opacity,
-                      child: child,
-                    );
+                    return Opacity(opacity: opacity, child: child);
                   },
                   child: Center(
                     child: Row(
@@ -323,7 +333,9 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
                               ),
                               child: Center(
                                 child: Icon(
-                                  completed ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                                  completed
+                                      ? Icons.check_rounded
+                                      : Icons.arrow_forward_rounded,
                                   key: ValueKey(completed ? 'check' : 'arrow'),
                                   size: iconSize,
                                   color: widget.iconColor,
@@ -413,10 +425,7 @@ class AppTopWavePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
-        colors: [
-          Color(0xFFDBEDFC),
-          Color(0xFFE8F3FD),
-        ],
+        colors: [Color(0xFFDBEDFC), Color(0xFFE8F3FD)],
       ).createShader(Rect.fromLTWH(0, 0, w, h))
       ..style = PaintingStyle.fill;
 

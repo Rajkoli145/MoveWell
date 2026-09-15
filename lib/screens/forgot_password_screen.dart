@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../palette.dart';
+import '../services/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({
@@ -19,6 +20,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
+  bool _isSending = false;
 
   @override
   void dispose() {
@@ -26,11 +28,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _handleReset() {
-    if (widget.onResetSent != null) {
-      widget.onResetSent!();
-    } else {
-      widget.onBack();
+  Future<void> _handleReset() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email address first.')),
+      );
+      return;
+    }
+    if (_isSending) return;
+    setState(() => _isSending = true);
+    try {
+      await AuthService.instance.sendPasswordReset(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset email sent.')),
+      );
+      if (widget.onResetSent != null) {
+        widget.onResetSent!();
+      } else {
+        widget.onBack();
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthService.instance.readableError(error))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -210,7 +236,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                         fontSize: 10.5,
                                         height: 1.12,
                                         letterSpacing: 0.4,
-                                        color: const Color(0xFF64748B).withValues(alpha: 0.85),
+                                        color: const Color(0xFF64748B)
+                                            .withValues(alpha: 0.85),
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -225,7 +252,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                       // Gap aligning the Form Panel below the hero 3D objects
                       SizedBox(
-                        height: (heroH - (isNarrow ? 290 : 315)).clamp(10.0, 50.0),
+                        height: (heroH - (isNarrow ? 290 : 315)).clamp(
+                          10.0,
+                          50.0,
+                        ),
                       ),
 
                       // Reset Form Panel (Rounded white/icy card)
@@ -258,10 +288,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFF4F7FB).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: const Color(0xFFE2EBF2),
-          width: 1.1,
-        ),
+        border: Border.all(color: const Color(0xFFE2EBF2), width: 1.1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),
@@ -292,10 +319,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFFAFCFE),
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: const Color(0xFFE1EBF2),
-                width: 1.1,
-              ),
+              border: Border.all(color: const Color(0xFFE1EBF2), width: 1.1),
             ),
             child: Row(
               children: [
@@ -334,7 +358,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
           // Send Reset Link Action Button with Drag/Slide Arrow
           SlideActionPillButton(
-            label: 'Send Reset Link',
+            label: _isSending ? 'Sending...' : 'Send Reset Link',
             onTap: _handleReset,
             height: 48,
             fontSize: isNarrow ? 14 : 15,
@@ -345,10 +369,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 1,
-                  color: const Color(0xFFE2EBF2),
-                ),
+                child: Container(height: 1, color: const Color(0xFFE2EBF2)),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -363,10 +384,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               Expanded(
-                child: Container(
-                  height: 1,
-                  color: const Color(0xFFE2EBF2),
-                ),
+                child: Container(height: 1, color: const Color(0xFFE2EBF2)),
               ),
             ],
           ),
@@ -378,7 +396,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               onTap: widget.onBack,
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 12,
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -406,8 +427,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-
-
 
 class _SmallStepsScribble extends StatelessWidget {
   const _SmallStepsScribble();

@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../palette.dart';
+import '../services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
     super.key,
-    required this.onContinue,
+    required this.onAuthenticated,
     required this.onForgot,
   });
 
-  final VoidCallback onContinue;
+  final Future<void> Function() onAuthenticated;
   final VoidCallback onForgot;
 
   @override
@@ -23,6 +24,55 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  Future<void> _runAuthentication(Future<void> Function() operation) async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    try {
+      await operation();
+      await widget.onAuthenticated();
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _errorMessage = AuthService.instance.readableError(error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _submitEmail() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final name = _nameController.text.trim();
+    if (email.isEmpty || password.isEmpty || (!_isLogin && name.isEmpty)) {
+      setState(() => _errorMessage = 'Please complete all required fields.');
+      return;
+    }
+    await _runAuthentication(() async {
+      if (AuthService.instance.currentUser != null) return;
+      if (_isLogin) {
+        await AuthService.instance.signInWithEmail(email, password);
+      } else {
+        await AuthService.instance.signUpWithEmail(
+          name: name,
+          email: email,
+          password: password,
+        );
+      }
+    });
+  }
+
+  Future<void> _submitGoogle() => _runAuthentication(() async {
+    if (AuthService.instance.currentUser != null) return;
+    await AuthService.instance.signInWithGoogle();
+  });
 
   @override
   void dispose() {
@@ -148,7 +198,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                         fontSize: 9.8,
                                         height: 1.1,
                                         letterSpacing: 0.4,
-                                        color: const Color(0xFF64748B).withValues(alpha: 0.85),
+                                        color: const Color(0xFF64748B)
+                                            .withValues(alpha: 0.85),
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -163,7 +214,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
                       // Gap aligning the Login Card directly beneath the towel & platform
                       SizedBox(
-                        height: (heroH - (isNarrow ? 255 : 275)).clamp(8.0, 45.0),
+                        height: (heroH - (isNarrow ? 255 : 275)).clamp(
+                          8.0,
+                          45.0,
+                        ),
                       ),
 
                       // Rounded Login / Sign Up Panel (Fills mobile viewport width with standard margin)
@@ -196,10 +250,7 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFF4F7FB).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: const Color(0xFFE2EBF2),
-          width: 1.1,
-        ),
+        border: Border.all(color: const Color(0xFFE2EBF2), width: 1.1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -304,21 +355,31 @@ class _AuthScreenState extends State<AuthScreen> {
 
           // Log In / Create Account Action Button with Interactive Left-to-Right Drag / Slide Arrow
           SlideActionPillButton(
-            label: _isLogin ? 'Log In' : 'Sign Up',
-            onTap: widget.onContinue,
+            label: _isSubmitting
+                ? 'Please wait...'
+                : (_isLogin ? 'Log In' : 'Sign Up'),
+            onTap: _submitEmail,
             height: 48,
             fontSize: isNarrow ? 14 : 15,
           ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 9),
+            Text(
+              _errorMessage!,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFDC2626),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
 
           // OR Divider
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 0.9,
-                  color: const Color(0xFFE2EBF2),
-                ),
+                child: Container(height: 0.9, color: const Color(0xFFE2EBF2)),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -333,29 +394,24 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               Expanded(
-                child: Container(
-                  height: 0.9,
-                  color: const Color(0xFFE2EBF2),
-                ),
+                child: Container(height: 0.9, color: const Color(0xFFE2EBF2)),
               ),
             ],
           ),
           const SizedBox(height: 14),
 
           // Social Login Buttons: Google, Apple, Facebook
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _SocialButton(
                 icon: Icons.g_mobiledata_rounded,
                 isGoogle: true,
                 label: 'Google',
+                onTap: _isSubmitting ? null : _submitGoogle,
               ),
-              _SocialButton(
-                icon: Icons.apple_rounded,
-                label: 'Apple',
-              ),
-              _SocialButton(
+              const _SocialButton(icon: Icons.apple_rounded, label: 'Apple'),
+              const _SocialButton(
                 icon: Icons.facebook_rounded,
                 isFacebook: true,
                 label: 'Facebook',
@@ -422,18 +478,11 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFFAFCFE),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE1EBF2),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE1EBF2), width: 1.0),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: const Color(0xFF7B91A6),
-          ),
+          Icon(icon, size: 18, color: const Color(0xFF7B91A6)),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -465,8 +514,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-
-
 class _MoveWellHeaderLeft extends StatelessWidget {
   const _MoveWellHeaderLeft();
 
@@ -479,11 +526,7 @@ class _MoveWellHeaderLeft extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            AppAssets.logo,
-            width: 26,
-            height: 26,
-          ),
+          Image.asset(AppAssets.logo, width: 26, height: 26),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,17 +605,19 @@ class _SocialButton extends StatelessWidget {
     required this.label,
     this.isGoogle = false,
     this.isFacebook = false,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool isGoogle;
   final bool isFacebook;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -645,7 +690,12 @@ class _MiniScribblePainter extends CustomPainter {
       final y = 1.6 + i * 3.0;
       final path = Path()
         ..moveTo(0, y)
-        ..quadraticBezierTo(size.width * .35, y - 1.2, size.width * .65, y + 0.8)
+        ..quadraticBezierTo(
+          size.width * .35,
+          y - 1.2,
+          size.width * .65,
+          y + 0.8,
+        )
         ..quadraticBezierTo(size.width * .85, y + 1.2, size.width, y - 0.4);
       canvas.drawPath(path, paint);
     }

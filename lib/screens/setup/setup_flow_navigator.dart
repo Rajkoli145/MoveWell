@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'setup_models.dart';
 import 'gender_screen.dart';
 import 'age_screen.dart';
@@ -15,10 +16,12 @@ class SetupFlowNavigator extends StatefulWidget {
     super.key,
     required this.onFinish,
     required this.onExitToAuth,
+    this.initialName,
   });
 
-  final VoidCallback onFinish;
+  final Future<void> Function(SetupProfileData data) onFinish;
   final VoidCallback onExitToAuth;
+  final String? initialName;
 
   @override
   State<SetupFlowNavigator> createState() => _SetupFlowNavigatorState();
@@ -26,13 +29,17 @@ class SetupFlowNavigator extends StatefulWidget {
 
 class _SetupFlowNavigatorState extends State<SetupFlowNavigator> {
   int _currentStep = 0;
-  final SetupProfileData _data = SetupProfileData();
+  late final SetupProfileData _data = SetupProfileData(
+    fullName: widget.initialName?.trim().isNotEmpty == true
+        ? widget.initialName!.trim()
+        : 'MoveWell User',
+  );
 
   void _next() {
     if (_currentStep < 8) {
       setState(() => _currentStep++);
     } else {
-      widget.onFinish();
+      widget.onFinish(_data);
     }
   }
 
@@ -122,11 +129,7 @@ class _SetupFlowNavigatorState extends State<SetupFlowNavigator> {
         );
         break;
       case 6:
-        stepWidget = ProfileScreen(
-          data: _data,
-          onNext: _next,
-          onBack: _back,
-        );
+        stepWidget = ProfileScreen(data: _data, onNext: _next, onBack: _back);
         break;
       case 7:
         stepWidget = AlmostThereScreen(
@@ -140,7 +143,7 @@ class _SetupFlowNavigatorState extends State<SetupFlowNavigator> {
       default:
         stepWidget = AllSetScreen(
           data: _data,
-          onFinish: widget.onFinish,
+          onFinish: () => widget.onFinish(_data),
           onBack: _back,
         );
         break;
@@ -151,15 +154,9 @@ class _SetupFlowNavigatorState extends State<SetupFlowNavigator> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
+        return FadeTransition(opacity: animation, child: child);
       },
-      child: KeyedSubtree(
-        key: ValueKey(_currentStep),
-        child: stepWidget,
-      ),
+      child: KeyedSubtree(key: ValueKey(_currentStep), child: stepWidget),
     );
   }
 }

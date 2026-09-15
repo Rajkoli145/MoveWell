@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../palette.dart';
+import '../models/workout_plan.dart';
+import '../services/routine_api.dart';
+import 'favorites_screen.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
+import 'workout_session_screen.dart';
 
 /// Interactive Workout Screen matching MoveWell Design System
 class WorkoutScreen extends StatefulWidget {
@@ -29,6 +34,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   String _selectedTab = 'Overview';
   int _navIndex = 1; // Resources / Workout tab
+  bool _isLoadingCustomRoutines = true;
+  List<Routine> _customRoutines = [];
 
   final List<String> _tabs = [
     'Overview',
@@ -44,7 +51,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'icon': Icons.fitness_center_rounded,
       'color': Color(0xFF2563EB),
       'bg': Color(0xFFEFF6FF),
-      'exercises': ['Barbell Squats', 'Bench Press', 'Pull-ups', 'Overhead Press'],
+      'exercises': [
+        'Barbell Squats',
+        'Bench Press',
+        'Pull-ups',
+        'Overhead Press',
+      ],
     },
     {
       'title': 'Cardio',
@@ -52,7 +64,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'icon': Icons.directions_run_rounded,
       'color': Color(0xFF16A34A),
       'bg': Color(0xFFF0FDF4),
-      'exercises': ['HIIT Sprints', 'Jump Rope', 'Burpees', 'Mountain Climbers'],
+      'exercises': [
+        'HIIT Sprints',
+        'Jump Rope',
+        'Burpees',
+        'Mountain Climbers',
+      ],
     },
     {
       'title': 'Yoga',
@@ -60,7 +77,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'icon': Icons.self_improvement_rounded,
       'color': Color(0xFFEA580C),
       'bg': Color(0xFFFFF7ED),
-      'exercises': ['Sun Salutations', 'Warrior Poses', 'Cobra Pose', 'Pigeon Stretch'],
+      'exercises': [
+        'Sun Salutations',
+        'Warrior Poses',
+        'Cobra Pose',
+        'Pigeon Stretch',
+      ],
     },
     {
       'title': 'Core',
@@ -68,7 +90,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'icon': Icons.shield_outlined,
       'color': Color(0xFF9333EA),
       'bg': Color(0xFFFAF5FF),
-      'exercises': ['Plank Hold', 'Bicycle Crunches', 'Russian Twists', 'Leg Raises'],
+      'exercises': [
+        'Plank Hold',
+        'Bicycle Crunches',
+        'Russian Twists',
+        'Leg Raises',
+      ],
     },
   ];
 
@@ -128,6 +155,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'bg': Color(0xFFF0FDF4),
       'bars': 1,
       'workoutsCount': '12 routines',
+      'image': AppAssets.exerciseGuide,
+      'time': '20 min',
+      'calories': '140 kcal',
+      'exercises': exerciseLibraryByLevel['Beginner'],
     },
     {
       'level': 'Intermediate',
@@ -136,6 +167,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'bg': Color(0xFFEFF6FF),
       'bars': 2,
       'workoutsCount': '24 routines',
+      'image': AppAssets.exerciseGuide,
+      'time': '30 min',
+      'calories': '230 kcal',
+      'exercises': exerciseLibraryByLevel['Intermediate'],
     },
     {
       'level': 'Advanced',
@@ -144,6 +179,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'bg': Color(0xFFFAF5FF),
       'bars': 3,
       'workoutsCount': '18 routines',
+      'image': AppAssets.exerciseGuide,
+      'time': '40 min',
+      'calories': '340 kcal',
+      'exercises': exerciseLibraryByLevel['Advanced'],
     },
   ];
 
@@ -151,6 +190,50 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   void initState() {
     super.initState();
     _selectedTab = widget.initialTab;
+    _loadCustomRoutines();
+  }
+
+  Future<void> _loadCustomRoutines() async {
+    try {
+      final routines = await RoutineApi.instance.list();
+      if (mounted) setState(() => _customRoutines = routines);
+    } catch (_) {
+      // The page remains usable offline; saves will report a specific error.
+    } finally {
+      if (mounted) setState(() => _isLoadingCustomRoutines = false);
+    }
+  }
+
+  Map<String, dynamic> _routineWorkout(Routine routine) => {
+    'id': routine.id,
+    'title': routine.title,
+    'subtitle': 'Your custom ${routine.level.toLowerCase()} routine.',
+    'image': AppAssets.exerciseGuide,
+    'time': '${routine.durationMinutes} min',
+    'level': routine.level,
+    'calories': 'Custom',
+    'exercises': routine.exercises,
+  };
+
+  Future<void> _toggleFavorite(Routine routine) async {
+    try {
+      final updated = await RoutineApi.instance.setFavorite(
+        routine,
+        !routine.favorite,
+      );
+      if (!mounted) return;
+      setState(() {
+        _customRoutines = _customRoutines
+            .map((item) => item.id == updated.id ? updated : item)
+            .toList();
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update favorite: $error')),
+        );
+      }
+    }
   }
 
   @override
@@ -162,13 +245,26 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   void _onTabTapped(String tab) {
     setState(() => _selectedTab = tab);
     if (tab == 'Preset Routines') {
-      Scrollable.ensureVisible(_presetKey.currentContext ?? context, duration: const Duration(milliseconds: 350));
+      Scrollable.ensureVisible(
+        _presetKey.currentContext ?? context,
+        duration: const Duration(milliseconds: 350),
+      );
     } else if (tab == 'Create Routine') {
-      Scrollable.ensureVisible(_createKey.currentContext ?? context, duration: const Duration(milliseconds: 350));
+      Scrollable.ensureVisible(
+        _createKey.currentContext ?? context,
+        duration: const Duration(milliseconds: 350),
+      );
     } else if (tab == 'By Level') {
-      Scrollable.ensureVisible(_levelKey.currentContext ?? context, duration: const Duration(milliseconds: 350));
+      Scrollable.ensureVisible(
+        _levelKey.currentContext ?? context,
+        duration: const Duration(milliseconds: 350),
+      );
     } else {
-      _scrollController.animateTo(0, duration: const Duration(milliseconds: 350), curve: Curves.easeInOut);
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -220,7 +316,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDBEAFE),
                       borderRadius: BorderRadius.circular(6),
@@ -248,18 +347,34 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF64748B)),
+                  const Icon(
+                    Icons.access_time_rounded,
+                    size: 16,
+                    color: Color(0xFF64748B),
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     workout['time'] as String,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF64748B),
+                    ),
                   ),
                   const SizedBox(width: 14),
-                  const Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFEA580C)),
+                  const Icon(
+                    Icons.local_fire_department_rounded,
+                    size: 16,
+                    color: Color(0xFFEA580C),
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     workout['calories'] as String,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF64748B),
+                    ),
                   ),
                 ],
               ),
@@ -278,7 +393,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF16A34A)),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 40,
+                          child: ExerciseVisual(exercise: ex, height: 40),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -307,13 +428,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Starting ${workout['title']}! Get ready!',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                    final minutes =
+                        workout['durationMinutes'] as int? ??
+                        int.tryParse(
+                          (workout['time'] as String? ?? '20').split(' ').first,
+                        ) ??
+                        20;
+                    Navigator.of(context).push(
+                      MaterialPageRoute<bool>(
+                        builder: (_) => WorkoutSessionScreen(
+                          plan: WorkoutPlan(
+                            title: workout['title'] as String? ?? 'Workout',
+                            level: workout['level'] as String? ?? 'Beginner',
+                            durationMinutes: minutes,
+                            exercises:
+                                (workout['exercises'] as List<dynamic>? ??
+                                        const [])
+                                    .whereType<String>()
+                                    .toList(),
+                            routineId: workout['id'] as String?,
+                          ),
                         ),
-                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
@@ -336,8 +471,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   void _showCreateRoutineModal() {
     final titleCtrl = TextEditingController(text: 'My Custom Routine');
+    final customExerciseCtrl = TextEditingController();
     String selectedLevel = 'Intermediate';
     String selectedDuration = '30 mins';
+    bool isSaving = false;
+    final selectedExercises = <String>{};
 
     showModalBottomSheet<void>(
       context: context,
@@ -356,143 +494,350 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 22,
                 MediaQuery.of(context).viewInsets.bottom + 32,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFCBD5E1),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Create Your Own Routine',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Palette.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Customize exercises, targets, and sets to fit your goals.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Routine Name',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: titleCtrl,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Target Level',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
-                  ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    children: ['Beginner', 'Intermediate', 'Advanced'].map((lvl) {
-                      final isSel = selectedLevel == lvl;
-                      return ChoiceChip(
-                        label: Text(lvl),
-                        selected: isSel,
-                        selectedColor: const Color(0xFFDBEAFE),
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        labelStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                          color: isSel ? const Color(0xFF2563EB) : const Color(0xFF475569),
-                        ),
-                        onSelected: (val) => setModalState(() => selectedLevel = lvl),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Target Duration',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
-                  ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    children: ['15 mins', '30 mins', '45 mins', '60 mins'].map((dur) {
-                      final isSel = selectedDuration == dur;
-                      return ChoiceChip(
-                        label: Text(dur),
-                        selected: isSel,
-                        selectedColor: const Color(0xFFDBEAFE),
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        labelStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                          color: isSel ? const Color(0xFF2563EB) : const Color(0xFF475569),
-                        ),
-                        onSelected: (val) => setModalState(() => selectedDuration = dur),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCBD5E1),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Custom Routine "${titleCtrl.text}" saved successfully!',
-                              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                            ),
-                            behavior: SnackBarBehavior.floating,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Create Your Own Routine',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Palette.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Customize exercises, targets, and sets to fit your goals.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Routine Name',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: titleCtrl,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
                           ),
-                        );
-                      },
-                      child: Text(
-                        'Save Routine',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 14),
+                    Text(
+                      'Target Level',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      children: ['Beginner', 'Intermediate', 'Advanced'].map((
+                        lvl,
+                      ) {
+                        final isSel = selectedLevel == lvl;
+                        return ChoiceChip(
+                          label: Text(lvl),
+                          selected: isSel,
+                          selectedColor: const Color(0xFFDBEAFE),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          labelStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: isSel
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSel
+                                ? const Color(0xFF2563EB)
+                                : const Color(0xFF475569),
+                          ),
+                          onSelected: (val) => setModalState(() {
+                            selectedLevel = lvl;
+                            selectedExercises.clear();
+                          }),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Choose Exercises',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 220),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: exerciseLibraryByLevel[selectedLevel]!
+                            .map(
+                              (exercise) => CheckboxListTile(
+                                dense: true,
+                                value: selectedExercises.contains(exercise),
+                                activeColor: const Color(0xFF2563EB),
+                                title: Text(
+                                  exercise,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                secondary: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: SizedBox(
+                                    width: 44,
+                                    child: ExerciseVisual(
+                                      exercise: exercise,
+                                      height: 44,
+                                    ),
+                                  ),
+                                ),
+                                onChanged: (selected) => setModalState(() {
+                                  if (selected == true) {
+                                    selectedExercises.add(exercise);
+                                  } else {
+                                    selectedExercises.remove(exercise);
+                                  }
+                                }),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: customExerciseCtrl,
+                            textInputAction: TextInputAction.done,
+                            decoration: InputDecoration(
+                              hintText: 'Add your own exercise and target',
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              isDense: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          tooltip: 'Add exercise',
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                          ),
+                          onPressed: () {
+                            final exercise = customExerciseCtrl.text.trim();
+                            if (exercise.isEmpty) return;
+                            setModalState(() {
+                              selectedExercises.add(exercise);
+                              customExerciseCtrl.clear();
+                            });
+                          },
+                          icon: const Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (selectedExercises.any(
+                      (exercise) => !exerciseLibraryByLevel[selectedLevel]!
+                          .contains(exercise),
+                    )) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: selectedExercises
+                            .where(
+                              (exercise) =>
+                                  !exerciseLibraryByLevel[selectedLevel]!
+                                      .contains(exercise),
+                            )
+                            .map(
+                              (exercise) => InputChip(
+                                label: Text(exercise),
+                                onDeleted: () => setModalState(
+                                  () => selectedExercises.remove(exercise),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Text(
+                      'Target Duration',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      children: ['15 mins', '30 mins', '45 mins', '60 mins']
+                          .map((dur) {
+                            final isSel = selectedDuration == dur;
+                            return ChoiceChip(
+                              label: Text(dur),
+                              selected: isSel,
+                              selectedColor: const Color(0xFFDBEAFE),
+                              backgroundColor: const Color(0xFFF1F5F9),
+                              labelStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: isSel
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isSel
+                                    ? const Color(0xFF2563EB)
+                                    : const Color(0xFF475569),
+                              ),
+                              onSelected: (val) =>
+                                  setModalState(() => selectedDuration = dur),
+                            );
+                          })
+                          .toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final title = titleCtrl.text.trim();
+                                if (title.isEmpty) return;
+                                if (selectedExercises.isEmpty) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Choose at least one exercise.',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                setModalState(() => isSaving = true);
+                                try {
+                                  final routine = await RoutineApi.instance
+                                      .create(
+                                        title: title,
+                                        level: selectedLevel,
+                                        durationMinutes: int.parse(
+                                          selectedDuration.split(' ').first,
+                                        ),
+                                        exercises: selectedExercises.toList(),
+                                      );
+                                  if (!mounted || !ctx.mounted) return;
+                                  setState(() {
+                                    _customRoutines = [
+                                      routine,
+                                      ..._customRoutines,
+                                    ];
+                                  });
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        '"${routine.title}" is now in My Routines.',
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                } catch (error) {
+                                  if (ctx.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Could not save routine: $error',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (ctx.mounted) {
+                                    setModalState(() => isSaving = false);
+                                  }
+                                }
+                              },
+                        child: Text(
+                          isSaving ? 'Saving...' : 'Save Routine',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -545,15 +890,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         const SizedBox(height: 24),
 
                         // Preset Routines Section
-                        Container(key: _presetKey, child: _buildPresetRoutinesSection()),
+                        Container(
+                          key: _presetKey,
+                          child: _buildPresetRoutinesSection(),
+                        ),
                         const SizedBox(height: 24),
 
                         // Create Your Own Routine Section
-                        Container(key: _createKey, child: _buildCreateRoutineSection()),
+                        Container(
+                          key: _createKey,
+                          child: _buildCreateRoutineSection(),
+                        ),
+                        const SizedBox(height: 24),
+
+                        _buildMyRoutinesSection(),
                         const SizedBox(height: 24),
 
                         // Browse by Level Section
-                        Container(key: _levelKey, child: _buildBrowseByLevelSection()),
+                        Container(
+                          key: _levelKey,
+                          child: _buildBrowseByLevelSection(),
+                        ),
                       ],
                     ),
                   ),
@@ -563,12 +920,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ),
 
           // Floating Bottom Navigation Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildBottomNavBar(),
-          ),
+          Positioned(left: 0, right: 0, bottom: 0, child: _buildBottomNavBar()),
         ],
       ),
     );
@@ -633,9 +985,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (context) => SearchScreen(
-                    onBack: () => Navigator.pop(context),
-                  ),
+                  builder: (context) =>
+                      SearchScreen(onBack: () => Navigator.pop(context)),
                 ),
               );
             },
@@ -683,12 +1034,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               borderRadius: BorderRadius.circular(20),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
+                  color: isSelected
+                      ? const Color(0xFFDBEAFE)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF93C5FD) : Colors.transparent,
+                    color: isSelected
+                        ? const Color(0xFF93C5FD)
+                        : Colors.transparent,
                     width: 1,
                   ),
                 ),
@@ -697,7 +1055,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                    color: isSelected
+                        ? const Color(0xFF2563EB)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ),
@@ -735,10 +1095,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               top: 0,
               bottom: 0,
               width: 170,
-              child: Image.asset(
-                AppAssets.workoutHero,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(AppAssets.workoutHero, fit: BoxFit.cover),
             ),
 
             // Left Gradient overlay
@@ -799,10 +1156,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         ),
                         const SizedBox(height: 16),
                         InkWell(
-                          onTap: () => _showWorkoutStartSheet(_presetRoutines[0]),
+                          onTap: () =>
+                              _showWorkoutStartSheet(_presetRoutines[0]),
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF2563EB),
                               borderRadius: BorderRadius.circular(20),
@@ -810,7 +1171,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.play_arrow_rounded, size: 18, color: Colors.white),
+                                const Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Start Workout',
@@ -834,9 +1199,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       children: [
                         _buildHeroMetaPill(Icons.access_time_rounded, '30 min'),
                         const SizedBox(height: 6),
-                        _buildHeroMetaPill(Icons.bar_chart_rounded, 'Intermediate'),
+                        _buildHeroMetaPill(
+                          Icons.bar_chart_rounded,
+                          'Intermediate',
+                        ),
                         const SizedBox(height: 6),
-                        _buildHeroMetaPill(Icons.local_fire_department_rounded, '250 kcal'),
+                        _buildHeroMetaPill(
+                          Icons.local_fire_department_rounded,
+                          '250 kcal',
+                        ),
                       ],
                     ),
                   ),
@@ -894,7 +1265,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () =>
+                  _showCatalogSheet('Quick Start', _quickStartCategories),
               child: Row(
                 children: [
                   Text(
@@ -906,7 +1278,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF2563EB)),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ),
@@ -920,23 +1296,31 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: InkWell(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Selected Quick Start: ${cat['title']}'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                    _showWorkoutStartSheet({
+                      ...cat,
+                      'image': AppAssets.exerciseGuide,
+                      'time': '20 min',
+                      'level': 'Intermediate',
+                      'calories': '180 kcal',
+                    });
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: cat['bg'] as Color,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       children: [
-                        Icon(cat['icon'] as IconData, size: 26, color: cat['color'] as Color),
+                        Icon(
+                          cat['icon'] as IconData,
+                          size: 26,
+                          color: cat['color'] as Color,
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           cat['title'] as String,
@@ -986,7 +1370,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () =>
+                  _showCatalogSheet('Preset Routines', _presetRoutines),
               child: Row(
                 children: [
                   Text(
@@ -998,7 +1383,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF2563EB)),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ),
@@ -1066,32 +1455,57 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  const Icon(Icons.access_time_rounded, size: 12, color: Color(0xFF94A3B8)),
+                                  const Icon(
+                                    Icons.access_time_rounded,
+                                    size: 12,
+                                    color: Color(0xFF94A3B8),
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     routine['time'] as String,
-                                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      color: const Color(0xFF64748B),
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Icon(Icons.bar_chart_rounded, size: 12, color: Color(0xFF94A3B8)),
+                                  const Icon(
+                                    Icons.bar_chart_rounded,
+                                    size: 12,
+                                    color: Color(0xFF94A3B8),
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     routine['level'] as String,
-                                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      color: const Color(0xFF64748B),
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Icon(Icons.local_fire_department_rounded, size: 12, color: Color(0xFFEA580C)),
+                                  const Icon(
+                                    Icons.local_fire_department_rounded,
+                                    size: 12,
+                                    color: Color(0xFFEA580C),
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     routine['calories'] as String,
-                                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      color: const Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFF94A3B8)),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: Color(0xFF94A3B8),
+                        ),
                       ],
                     ),
                   ),
@@ -1180,7 +1594,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFF94A3B8)),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: Color(0xFF94A3B8),
+                    ),
                   ],
                 ),
               ),
@@ -1188,6 +1606,173 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMyRoutinesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'My Routines',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (_isLoadingCustomRoutines)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (_customRoutines.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              'Your saved routines will appear here.',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          )
+        else
+          ..._customRoutines.map(
+            (routine) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  onTap: () => _showWorkoutStartSheet(_routineWorkout(routine)),
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFE0F2FE),
+                    child: Icon(
+                      Icons.fitness_center_rounded,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                  title: Text(
+                    routine.title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${routine.durationMinutes} min • ${routine.level}',
+                  ),
+                  trailing: IconButton(
+                    tooltip: routine.favorite
+                        ? 'Remove favorite'
+                        : 'Add to favorites',
+                    icon: Icon(
+                      routine.favorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: routine.favorite
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF64748B),
+                    ),
+                    onPressed: () => _toggleFavorite(routine),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showCatalogSheet(String title, List<Map<String, dynamic>> items) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.72,
+        builder: (context, controller) => ListView.separated(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+          itemCount: items.length + 1,
+          separatorBuilder: (_, index) => const Divider(),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              );
+            }
+            final item = items[index - 1];
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 6,
+              ),
+              leading: _buildCatalogLeading(item),
+              title: Text(
+                (item['title'] ?? item['level']) as String,
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                (item['subtitle'] ?? item['workoutsCount'] ?? '') as String,
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                final workout = {
+                  'title': item['title'] ?? item['level'],
+                  'subtitle': item['subtitle'] ?? item['workoutsCount'],
+                  'image': item['image'] ?? AppAssets.workoutHero,
+                  'time': item['time'] ?? '20 min',
+                  'level': item['level'] ?? 'All levels',
+                  'calories': item['calories'] ?? 'Custom',
+                  'exercises': item['exercises'] ?? const <String>[],
+                };
+                _showWorkoutStartSheet(workout);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCatalogLeading(Map<String, dynamic> item) {
+    final image = item['image'];
+    if (image is String) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(image, width: 54, height: 54, fit: BoxFit.cover),
+      );
+    }
+
+    final icon = item['icon'] as IconData? ?? Icons.bar_chart_rounded;
+    final color = item['color'] as Color? ?? const Color(0xFF2563EB);
+    final background = item['bg'] as Color? ?? const Color(0xFFEFF6FF);
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, color: color, size: 27),
     );
   }
 
@@ -1210,7 +1795,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () =>
+                  _showCatalogSheet('Browse by Level', _levelCategories),
               child: Row(
                 children: [
                   Text(
@@ -1222,7 +1808,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF2563EB)),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ),
@@ -1236,12 +1826,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: InkWell(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Browsing ${lvl['level']} Workouts (${lvl['workoutsCount']})'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                    _showWorkoutStartSheet({
+                      'title': '${lvl['level']} Full Body',
+                      'subtitle': lvl['subtitle'],
+                      'image': AppAssets.exerciseGuide,
+                      'time': lvl['time'],
+                      'level': lvl['level'],
+                      'calories': lvl['calories'],
+                      'exercises': lvl['exercises'],
+                    });
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
@@ -1322,15 +1915,35 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavItem(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-          _buildNavItem(Icons.auto_stories_outlined, Icons.auto_stories_rounded, 'Resources', 1),
-          _buildNavItem(Icons.favorite_outline_rounded, Icons.favorite_rounded, 'Favorite', 2),
-          _buildNavItem(Icons.support_agent_outlined, Icons.support_agent_rounded, 'Support', 3),
+          _buildNavItem(
+            Icons.auto_stories_outlined,
+            Icons.auto_stories_rounded,
+            'Resources',
+            1,
+          ),
+          _buildNavItem(
+            Icons.favorite_outline_rounded,
+            Icons.favorite_rounded,
+            'Favorite',
+            2,
+          ),
+          _buildNavItem(
+            Icons.support_agent_outlined,
+            Icons.support_agent_rounded,
+            'Support',
+            3,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData outlineIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavItem(
+    IconData outlineIcon,
+    IconData filledIcon,
+    String label,
+    int index,
+  ) {
     final isSelected = _navIndex == index;
     return InkWell(
       onTap: () {
@@ -1342,13 +1955,23 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           }
         } else if (index == 1) {
           // Already on Resources / Workout
-          _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        } else if (index == 2) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (context) =>
+                  FavoritesScreen(onBack: () => Navigator.pop(context)),
+            ),
+          );
         } else if (index == 3) {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (context) => SettingsScreen(
-                onBack: () => Navigator.pop(context),
-              ),
+              builder: (context) =>
+                  SettingsScreen(onBack: () => Navigator.pop(context)),
             ),
           );
         } else {
@@ -1364,7 +1987,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             Icon(
               isSelected ? filledIcon : outlineIcon,
               size: 22,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF94A3B8),
             ),
             const SizedBox(height: 3),
             Text(
@@ -1372,7 +1997,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+                color: isSelected
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF94A3B8),
               ),
             ),
           ],

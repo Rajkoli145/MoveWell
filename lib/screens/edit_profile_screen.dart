@@ -1,14 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/user_profile.dart';
 import '../palette.dart';
+import '../services/profile_api.dart';
+import '../services/profile_photo_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({
-    super.key,
-    this.onBack,
-  });
+  const EditProfileScreen({super.key, this.onBack});
 
   final VoidCallback? onBack;
 
@@ -34,6 +34,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late String _theme;
   late bool _notifications;
   late String _avatarPath;
+  bool _isUploadingAvatar = false;
 
   @override
   void initState() {
@@ -62,10 +63,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
-    _notifier.updateField(
-      fullName: _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : _notifier.profile.fullName,
-      email: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : _notifier.profile.email,
+  Future<void> _saveChanges() async {
+    final candidate = _notifier.profile.copyWith(
+      fullName: _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
+          : _notifier.profile.fullName,
       dateOfBirth: _dateOfBirth,
       gender: _gender,
       height: _height,
@@ -80,11 +82,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       avatarPath: _avatarPath,
     );
 
+    try {
+      final saved = await ProfileApi.instance.saveProfile(candidate);
+      _notifier.updateProfile(saved);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not save profile: $error')));
+      return;
+    }
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 20),
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Color(0xFF34D399),
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Text(
               'Profile updated successfully!',
@@ -135,11 +153,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (picked != null) {
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       setState(() {
-        _dateOfBirth = '${picked.day} ${months[picked.month - 1]} ${picked.year}';
+        _dateOfBirth =
+            '${picked.day} ${months[picked.month - 1]} ${picked.year}';
       });
     }
   }
@@ -354,7 +383,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _pickLanguage() {
-    const langs = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Japanese'];
+    const langs = [
+      'English',
+      'Spanish',
+      'French',
+      'German',
+      'Hindi',
+      'Japanese',
+    ];
     _showSelectModal(
       title: 'Select Language',
       options: langs,
@@ -416,7 +452,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 12),
               ...options.map((option) {
-                final isSelected = option.toLowerCase() == currentValue.toLowerCase();
+                final isSelected =
+                    option.toLowerCase() == currentValue.toLowerCase();
                 return InkWell(
                   onTap: () {
                     onSelected(option);
@@ -425,12 +462,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 13,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFE0F2FE) : const Color(0xFFF7FAFD),
+                      color: isSelected
+                          ? const Color(0xFFE0F2FE)
+                          : const Color(0xFFF7FAFD),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE5EEF6),
+                        color: isSelected
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFFE5EEF6),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -441,8 +485,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           option,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14.5,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                            color: isSelected ? const Color(0xFF2563EB) : Palette.ink,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: isSelected
+                                ? const Color(0xFF2563EB)
+                                : Palette.ink,
                           ),
                         ),
                         if (isSelected)
@@ -463,13 +511,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  void _showAvatarPicker() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Avatar image is synchronized'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+  Future<void> _showAvatarPicker() async {
+    if (_isUploadingAvatar) return;
+    setState(() => _isUploadingAvatar = true);
+    try {
+      final photoUrl = await ProfilePhotoService.instance.pickAndUpload();
+      if (!mounted || photoUrl == null) return;
+      setState(() => _avatarPath = photoUrl);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Photo selected. Tap Save Changes to update your profile.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not upload photo: $error')));
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
   }
 
   @override
@@ -630,7 +693,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         children: [
           // Avatar with Camera Badge
           GestureDetector(
-            onTap: _showAvatarPicker,
+            onTap: _isUploadingAvatar ? null : _showAvatarPicker,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -645,14 +708,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      _avatarPath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFFD6EDFC),
-                        child: const Icon(Icons.person, color: Palette.ink),
-                      ),
-                    ),
+                    child: _avatarPath.startsWith('http')
+                        ? Image.network(
+                            _avatarPath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              color: const Color(0xFFD6EDFC),
+                              child: const Icon(
+                                Icons.person,
+                                color: Palette.ink,
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            _avatarPath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              color: const Color(0xFFD6EDFC),
+                              child: const Icon(
+                                Icons.person,
+                                color: Palette.ink,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
                 Positioned(
@@ -666,11 +744,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
-                    child: const Icon(
-                      Icons.camera_alt_rounded,
-                      size: 12,
-                      color: Colors.white,
-                    ),
+                    child: _isUploadingAvatar
+                        ? const Padding(
+                            padding: EdgeInsets.all(5),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.8,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt_rounded,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                   ),
                 ),
               ],
@@ -706,7 +792,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: Palette.ink,
                     ),
                     decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       border: InputBorder.none,
                       isDense: true,
                     ),
@@ -730,6 +819,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   child: TextField(
                     controller: _emailController,
+                    readOnly: true,
                     keyboardType: TextInputType.emailAddress,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5,
@@ -737,7 +827,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: Palette.ink,
                     ),
                     decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       border: InputBorder.none,
                       isDense: true,
                     ),
@@ -862,7 +955,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                const Icon(Icons.notifications_none_rounded, size: 21, color: Palette.ink),
+                const Icon(
+                  Icons.notifications_none_rounded,
+                  size: 21,
+                  color: Palette.ink,
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(

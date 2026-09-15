@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/user_profile.dart';
 import '../palette.dart';
+import '../services/profile_api.dart';
+import '../services/auth_service.dart';
 import 'edit_profile_screen.dart';
 import 'notification_screen.dart';
 import 'settings_screen.dart';
+import 'workout_screen.dart';
+import 'favorites_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
   const ProfileViewScreen({
@@ -13,12 +18,14 @@ class ProfileViewScreen extends StatefulWidget {
     this.onHomeTap,
     this.onResourcesTap,
     this.onFavoriteTap,
+    this.onLogout,
   });
 
   final VoidCallback? onBack;
   final VoidCallback? onHomeTap;
   final VoidCallback? onResourcesTap;
   final VoidCallback? onFavoriteTap;
+  final VoidCallback? onLogout;
 
   @override
   State<ProfileViewScreen> createState() => _ProfileViewScreenState();
@@ -53,9 +60,8 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
   void _navigateToEditProfile() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => EditProfileScreen(
-          onBack: () => Navigator.pop(context),
-        ),
+        builder: (context) =>
+            EditProfileScreen(onBack: () => Navigator.pop(context)),
       ),
     );
   }
@@ -63,9 +69,8 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
   void _navigateToNotifications() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => NotificationScreen(
-          onBack: () => Navigator.pop(context),
-        ),
+        builder: (context) =>
+            NotificationScreen(onBack: () => Navigator.pop(context)),
       ),
     );
   }
@@ -122,7 +127,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                           color: Color(0xFFE0F2FE),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.bar_chart_rounded, color: Color(0xFF2563EB), size: 24),
+                        child: const Icon(
+                          Icons.bar_chart_rounded,
+                          color: Color(0xFF2563EB),
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -309,7 +318,9 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 width: 14,
                 height: 70 * heights[index],
                 decoration: BoxDecoration(
-                  color: isToday ? const Color(0xFF2563EB) : const Color(0xFFBFDBFE),
+                  color: isToday
+                      ? const Color(0xFF2563EB)
+                      : const Color(0xFFBFDBFE),
                   borderRadius: BorderRadius.circular(7),
                 ),
               ),
@@ -319,7 +330,9 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                  color: isToday ? const Color(0xFF2563EB) : const Color(0xFF7B91A6),
+                  color: isToday
+                      ? const Color(0xFF2563EB)
+                      : const Color(0xFF7B91A6),
                 ),
               ),
             ],
@@ -331,11 +344,26 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 
   void _showGoalsModal() {
     const goalOptions = [
-      {'title': 'Build Strength', 'desc': 'Get stronger, improve endurance and feel great.'},
-      {'title': 'Lose Weight', 'desc': 'Burn calories, lose fat and improve body composition.'},
-      {'title': 'Keep Fit', 'desc': 'Maintain daily energy, mobility and overall wellness.'},
-      {'title': 'Build Muscle', 'desc': 'Gain lean mass and sculpted muscle definition.'},
-      {'title': 'Improve Endurance', 'desc': 'Increase stamina for running, sports and daily vitality.'},
+      {
+        'title': 'Build Strength',
+        'desc': 'Get stronger, improve endurance and feel great.',
+      },
+      {
+        'title': 'Lose Weight',
+        'desc': 'Burn calories, lose fat and improve body composition.',
+      },
+      {
+        'title': 'Keep Fit',
+        'desc': 'Maintain daily energy, mobility and overall wellness.',
+      },
+      {
+        'title': 'Build Muscle',
+        'desc': 'Gain lean mass and sculpted muscle definition.',
+      },
+      {
+        'title': 'Improve Endurance',
+        'desc': 'Increase stamina for running, sports and daily vitality.',
+      },
     ];
 
     showModalBottomSheet<void>(
@@ -374,25 +402,45 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               ...goalOptions.map((g) {
                 final isSelected = g['title'] == _profile.goal;
                 return InkWell(
-                  onTap: () {
-                    _notifier.updateField(goal: g['title']!);
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Goal updated to ${g['title']}'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
+                  onTap: () async {
+                    try {
+                      final saved = await ProfileApi.instance.saveProfile(
+                        _profile.copyWith(goal: g['title']!),
+                      );
+                      _notifier.updateProfile(saved);
+                      if (!mounted || !ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Goal updated to ${g['title']}'),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    } catch (error) {
+                      if (!mounted || !ctx.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Could not update goal: $error'),
+                        ),
+                      );
+                    }
                   },
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFE0F2FE) : const Color(0xFFF7FAFD),
+                      color: isSelected
+                          ? const Color(0xFFE0F2FE)
+                          : const Color(0xFFF7FAFD),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE5EEF6),
+                        color: isSelected
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFFE5EEF6),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -407,7 +455,9 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isSelected ? const Color(0xFF2563EB) : Palette.ink,
+                                  color: isSelected
+                                      ? const Color(0xFF2563EB)
+                                      : Palette.ink,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -422,7 +472,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                           ),
                         ),
                         if (isSelected)
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF2563EB), size: 20),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFF2563EB),
+                            size: 20,
+                          ),
                       ],
                     ),
                   ),
@@ -526,7 +580,9 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
           title: Text(
             'Log Out?',
             style: GoogleFonts.plusJakartaSans(
@@ -562,7 +618,17 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              onPressed: () {
+              onPressed: () async {
+                try {
+                  await AuthService.instance.signOut();
+                } catch (error) {
+                  if (!mounted || !ctx.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Could not log out: $error')),
+                  );
+                  return;
+                }
+                if (!mounted || !ctx.mounted) return;
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -570,7 +636,9 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     backgroundColor: Color(0xFF1E2430),
                   ),
                 );
-                if (widget.onBack != null) {
+                if (widget.onLogout != null) {
+                  widget.onLogout!();
+                } else if (widget.onBack != null) {
                   widget.onBack!();
                 } else if (Navigator.canPop(context)) {
                   Navigator.pop(context);
@@ -653,12 +721,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
           ),
 
           // 3. Bottom Navigation Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildBottomNavBar(),
-          ),
+          Positioned(left: 0, right: 0, bottom: 0, child: _buildBottomNavBar()),
         ],
       ),
     );
@@ -773,14 +836,29 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                           ),
                         ),
                         child: ClipOval(
-                          child: Image.asset(
-                            _profile.avatarPath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: const Color(0xFFD6EDFC),
-                              child: const Icon(Icons.person, color: Palette.ink),
-                            ),
-                          ),
+                          child: _profile.avatarPath.startsWith('http')
+                              ? Image.network(
+                                  _profile.avatarPath,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Container(
+                                    color: const Color(0xFFD6EDFC),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Palette.ink,
+                                    ),
+                                  ),
+                                )
+                              : Image.asset(
+                                  _profile.avatarPath,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Container(
+                                    color: const Color(0xFFD6EDFC),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Palette.ink,
+                                    ),
+                                  ),
+                                ),
                         ),
                       ),
                       Positioned(
@@ -852,11 +930,21 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               children: [
                 _buildStatColumn('${_profile.age}', 'Age'),
                 _buildVerticalDivider(),
-                _buildStatColumn('${_profile.weight.round()} ${_profile.weightUnit}', 'Weight'),
+                _buildStatColumn(
+                  '${_profile.weight.round()} ${_profile.weightUnit}',
+                  'Weight',
+                ),
                 _buildVerticalDivider(),
-                _buildStatColumn('${_profile.height} ${_profile.heightUnit}', 'Height'),
+                _buildStatColumn(
+                  '${_profile.height} ${_profile.heightUnit}',
+                  'Height',
+                ),
                 _buildVerticalDivider(),
-                _buildStatColumn(_profile.activityLevel, 'Activity Level', isSmall: true),
+                _buildStatColumn(
+                  _profile.activityLevel,
+                  'Activity Level',
+                  isSmall: true,
+                ),
               ],
             ),
           ),
@@ -899,11 +987,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
   }
 
   Widget _buildVerticalDivider() {
-    return Container(
-      width: 1,
-      height: 26,
-      color: const Color(0xFFE5EEF6),
-    );
+    return Container(width: 1, height: 26, color: const Color(0xFFE5EEF6));
   }
 
   // ---------------------------------------------------------------------------
@@ -1246,7 +1330,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 19),
+            const Icon(
+              Icons.logout_rounded,
+              color: Color(0xFFEF4444),
+              size: 19,
+            ),
             const SizedBox(width: 8),
             Text(
               'Log Out',
@@ -1267,10 +1355,26 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildBottomNavBar() {
     final navItems = [
-      {'label': 'Home', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
-      {'label': 'Resources', 'icon': Icons.menu_book_outlined, 'activeIcon': Icons.menu_book_rounded},
-      {'label': 'Favorite', 'icon': Icons.favorite_border_rounded, 'activeIcon': Icons.favorite_rounded},
-      {'label': 'Support', 'icon': Icons.support_agent_outlined, 'activeIcon': Icons.support_agent_rounded},
+      {
+        'label': 'Home',
+        'icon': Icons.home_outlined,
+        'activeIcon': Icons.home_rounded,
+      },
+      {
+        'label': 'Resources',
+        'icon': Icons.menu_book_outlined,
+        'activeIcon': Icons.menu_book_rounded,
+      },
+      {
+        'label': 'Favorite',
+        'icon': Icons.favorite_border_rounded,
+        'activeIcon': Icons.favorite_rounded,
+      },
+      {
+        'label': 'Support',
+        'icon': Icons.support_agent_outlined,
+        'activeIcon': Icons.support_agent_rounded,
+      },
     ];
 
     return Container(
@@ -1299,6 +1403,20 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 } else if (Navigator.canPop(context)) {
                   Navigator.pop(context);
                 }
+              } else if (index == 1) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) =>
+                        WorkoutScreen(onBack: () => Navigator.pop(context)),
+                  ),
+                );
+              } else if (index == 2) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) =>
+                        FavoritesScreen(onBack: () => Navigator.pop(context)),
+                  ),
+                );
               } else {
                 setState(() => _navIndex = index);
               }
@@ -1314,7 +1432,9 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     isSelected
                         ? (navItems[index]['activeIcon'] as IconData)
                         : (navItems[index]['icon'] as IconData),
-                    color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+                    color: isSelected
+                        ? const Color(0xFF2563EB)
+                        : const Color(0xFF94A3B8),
                     size: 24,
                   ),
                   const SizedBox(height: 3),
@@ -1322,8 +1442,12 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     navItems[index]['label'] as String,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFF2563EB)
+                          : const Color(0xFF94A3B8),
                     ),
                   ),
                 ],

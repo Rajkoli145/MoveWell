@@ -93,7 +93,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: AuthScreen(
-          onContinue: () {},
+          onAuthenticated: () async {},
           onForgot: () {},
         ),
       ),
@@ -118,7 +118,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: SetupFlowNavigator(
-          onFinish: () {},
+          onFinish: (_) async {},
           onExitToAuth: () {},
         ),
       ),
@@ -141,7 +141,7 @@ void main() {
               width: 375,
               height: 812,
               child: SetupFlowNavigator(
-                onFinish: () => finished = true,
+                onFinish: (_) async => finished = true,
                 onExitToAuth: () {},
               ),
             ),
@@ -225,7 +225,7 @@ void main() {
     // 5. Weekly Challenge
     expect(find.text('Weekly Challenge'), findsOneWidget);
     expect(find.text('Move 5 Days This Week'), findsOneWidget);
-    expect(find.text('2 / 5'), findsOneWidget);
+    expect(find.text('0 / 5'), findsOneWidget);
 
     // 6. Articles & Tips
     expect(find.text('Articles & Tips'), findsOneWidget);
@@ -480,12 +480,6 @@ void main() {
     expect(find.text('Pre-Workout Energy Smoothie'), findsOneWidget);
   });
 }
-
-
-
-
-
-
 
 
 
