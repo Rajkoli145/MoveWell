@@ -7,6 +7,7 @@ import 'package:movewell/screens/edit_profile_screen.dart';
 import 'package:movewell/screens/forgot_password_screen.dart';
 import 'package:movewell/screens/home_screen.dart';
 import 'package:movewell/screens/notification_screen.dart';
+import 'package:movewell/screens/nutrition_screen.dart';
 import 'package:movewell/screens/profile_view_screen.dart';
 import 'package:movewell/screens/search_screen.dart';
 import 'package:movewell/screens/settings_screen.dart';
@@ -445,7 +446,41 @@ void main() {
     expect(find.text('Intermediate'), findsWidgets);
     expect(find.text('Advanced'), findsWidgets);
   });
+
+  testWidgets('NutritionScreen renders macro targets, water tracker, meals, and recipes', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: NutritionScreen(),
+      ),
+    );
+
+    expect(find.text('Nutrition'), findsOneWidget);
+    expect(find.text('Fuel your body, reach your goals.'), findsOneWidget);
+
+    // Macro tracker
+    expect(find.text('DAILY CALORIE TARGET'), findsOneWidget);
+    expect(find.text('1,850'), findsOneWidget);
+    expect(find.text('Protein'), findsOneWidget);
+    expect(find.text('Carbs'), findsOneWidget);
+    expect(find.text('Fats'), findsOneWidget);
+
+    // Water Tracker
+    expect(find.text('Hydration Tracker'), findsOneWidget);
+
+    // Today's Meals
+    expect(find.text("Today's Meals"), findsOneWidget);
+    expect(find.text('Breakfast'), findsOneWidget);
+    expect(find.text('Lunch'), findsOneWidget);
+    expect(find.text('Dinner'), findsOneWidget);
+    expect(find.text('Snacks'), findsOneWidget);
+
+    // High-Protein Recipes
+    expect(find.text('High-Protein Recipes'), findsOneWidget);
+    expect(find.text('5 High-Protein Muscle Meals'), findsOneWidget);
+    expect(find.text('Pre-Workout Energy Smoothie'), findsOneWidget);
+  });
 }
+
 
 
 

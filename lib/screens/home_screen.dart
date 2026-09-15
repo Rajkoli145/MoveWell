@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/user_profile.dart';
 import '../palette.dart';
 import 'notification_screen.dart';
+import 'nutrition_screen.dart';
 import 'profile_view_screen.dart';
 import 'search_screen.dart';
 import 'workout_screen.dart';
@@ -32,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentNavIndex = 0;
   int _waterGlasses = 3;
   int _dailySteps = 4320;
-  int _caloriesBurned = 1200;
+  final int _caloriesBurned = 1200;
   int _challengeDays = 2;
 
   @override
@@ -836,7 +837,13 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Calories',
               subtext: 'of 2,000',
               onTap: () {
-                setState(() => _caloriesBurned += 50);
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => NutritionScreen(
+                      onBack: () => Navigator.pop(context),
+                    ),
+                  ),
+                );
               },
             ),
           ),
