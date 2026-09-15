@@ -4,6 +4,7 @@ import '../models/user_profile.dart';
 import '../palette.dart';
 import 'edit_profile_screen.dart';
 import 'notification_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
   const ProfileViewScreen({
@@ -64,6 +65,17 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       MaterialPageRoute<void>(
         builder: (context) => NotificationScreen(
           onBack: () => Navigator.pop(context),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => SettingsScreen(
+          onBack: () => Navigator.pop(context),
+          onHomeTap: () => Navigator.pop(context),
         ),
       ),
     );
@@ -703,11 +715,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 
           // Settings Button
           GestureDetector(
-            onTap: () => _showInfoSheet(
-              'App Settings',
-              'MoveWell Version 2.4.0\n\n• Cloud Sync: Active\n• Units: Metric\n• Analytics: Privacy Friendly\n• Cache: 12.4 MB',
-              Icons.settings_outlined,
-            ),
+            onTap: _navigateToSettings,
             behavior: HitTestBehavior.opaque,
             child: Container(
               width: 42,
@@ -1121,11 +1129,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               _buildListRow(
                 icon: Icons.settings_outlined,
                 title: 'App Settings',
-                onTap: () => _showInfoSheet(
-                  'App Settings',
-                  'Manage app configurations, caching, synchronization frequency, and developer settings.',
-                  Icons.settings_outlined,
-                ),
+                onTap: _navigateToSettings,
               ),
             ],
           ),

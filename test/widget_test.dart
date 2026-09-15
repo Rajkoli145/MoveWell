@@ -8,6 +8,7 @@ import 'package:movewell/screens/forgot_password_screen.dart';
 import 'package:movewell/screens/home_screen.dart';
 import 'package:movewell/screens/notification_screen.dart';
 import 'package:movewell/screens/profile_view_screen.dart';
+import 'package:movewell/screens/settings_screen.dart';
 import 'package:movewell/screens/setup/setup_flow_navigator.dart';
 
 void main() {
@@ -327,6 +328,44 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('All notifications marked as read'), findsOneWidget);
+  });
+
+  testWidgets('SettingsScreen renders all settings categories and options', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SettingsScreen(),
+      ),
+    );
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Customize your experience\nand make MoveWell yours.'), findsOneWidget);
+
+    expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Edit Profile'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Change Password'), findsOneWidget);
+
+    expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('Theme'), findsOneWidget);
+    expect(find.text('Font Size'), findsOneWidget);
+
+    expect(find.text('App Preferences'), findsOneWidget);
+    expect(find.text('Dark Mode'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.text('Units'), findsOneWidget);
+
+    expect(find.text('Data & Privacy'), findsOneWidget);
+    expect(find.text('Privacy & Security'), findsOneWidget);
+    expect(find.text('Download My Data'), findsOneWidget);
+    expect(find.text('Delete Account'), findsOneWidget);
+
+    expect(find.text('About'), findsOneWidget);
+    expect(find.text('About MoveWell'), findsOneWidget);
+    expect(find.text('Terms of Service'), findsOneWidget);
+    expect(find.text('Privacy Policy'), findsOneWidget);
+
+    expect(find.text('Log Out'), findsOneWidget);
   });
 }
 
