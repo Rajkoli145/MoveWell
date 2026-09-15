@@ -635,17 +635,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Stack(
         children: [
           // 1. Organic Smooth Light Blue Top-Right Wave Background
-          Positioned(
+          const Positioned(
             top: 0,
             right: 0,
             left: 0,
             height: 320,
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: const AppTopWavePainter(),
-                size: const Size(double.infinity, 320),
-              ),
-            ),
+            child: FloatingWaveBackground(height: 320),
           ),
 
           // 2. Main Scrollable Content

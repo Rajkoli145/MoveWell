@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -24,7 +25,7 @@ class Palette {
 }
 
 class AppAssets {
-  static const logo = 'assets/icons/logo.png';
+  static const logo = 'assets/icons/logo1.png';
   static const hero = 'assets/images/hero.png';
   static const onboard = 'assets/images/onboard.png';
   static const bottleLogin = 'assets/images/bottle_login.png';
@@ -218,9 +219,9 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   @override
   Widget build(BuildContext context) {
     final double btnH = widget.height;
-    final double padding = btnH <= 36.0 ? 3.0 : (btnH < 44.0 ? 4.0 : 6.0);
+    final double padding = btnH <= 30.0 ? 2.0 : (btnH <= 36.0 ? 3.0 : (btnH < 44.0 ? 4.0 : 6.0));
     final double knobSize = btnH - (padding * 2);
-    final double iconSize = (knobSize * 0.52).clamp(11.0, 22.0);
+    final double iconSize = (knobSize * 0.50).clamp(10.0, 22.0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -344,15 +345,68 @@ class _SlideActionPillButtonState extends State<SlideActionPillButton>
   }
 }
 
+/// Animated floating organic blue wave background
+class FloatingWaveBackground extends StatefulWidget {
+  const FloatingWaveBackground({
+    super.key,
+    this.height = 320.0,
+  });
+
+  final double height;
+
+  @override
+  State<FloatingWaveBackground> createState() => _FloatingWaveBackgroundState();
+}
+
+class _FloatingWaveBackgroundState extends State<FloatingWaveBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: AppTopWavePainter(animationValue: _controller.value),
+            size: Size(double.infinity, widget.height),
+          );
+        },
+      ),
+    );
+  }
+}
+
 /// Organic, smooth light blue top-right wave background painter
 /// Matching the exact curved shape and soft gradient from the MoveWell design references.
 class AppTopWavePainter extends CustomPainter {
-  const AppTopWavePainter();
+  const AppTopWavePainter({this.animationValue = 0.0});
+
+  final double animationValue;
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+
+    final offset = (animationValue - 0.5) * 16.0;
+    final waveShift = math.sin(animationValue * 2 * math.pi) * 10.0;
 
     // 1. Primary soft light-blue wave
     final primaryWavePaint = Paint()
@@ -367,16 +421,16 @@ class AppTopWavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final path1 = Path();
-    path1.moveTo(w * 0.40, 0);
+    path1.moveTo(w * 0.40 + waveShift, 0);
     path1.cubicTo(
-      w * 0.48, h * 0.20,
-      w * 0.26, h * 0.46,
-      w * 0.46, h * 0.76,
+      w * 0.48 + waveShift * 0.8, h * 0.20 + offset,
+      w * 0.26 - waveShift * 0.5, h * 0.46 + offset,
+      w * 0.46 + waveShift * 0.6, h * 0.76 + offset,
     );
     path1.cubicTo(
-      w * 0.56, h * 0.90,
-      w * 0.76, h * 0.97,
-      w, h * 0.92,
+      w * 0.56 + waveShift * 0.4, h * 0.90 + offset,
+      w * 0.76 - waveShift * 0.3, h * 0.97 + offset,
+      w, h * 0.92 + offset,
     );
     path1.lineTo(w, 0);
     path1.close();
@@ -396,16 +450,16 @@ class AppTopWavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final path2 = Path();
-    path2.moveTo(w * 0.58, 0);
+    path2.moveTo(w * 0.58 - waveShift * 0.6, 0);
     path2.cubicTo(
-      w * 0.64, h * 0.22,
-      w * 0.42, h * 0.48,
-      w * 0.62, h * 0.78,
+      w * 0.64 - waveShift * 0.5, h * 0.22 - offset * 0.7,
+      w * 0.42 + waveShift * 0.7, h * 0.48 - offset * 0.7,
+      w * 0.62 - waveShift * 0.4, h * 0.78 - offset * 0.7,
     );
     path2.cubicTo(
-      w * 0.72, h * 0.92,
-      w * 0.88, h * 0.98,
-      w, h * 0.96,
+      w * 0.72 + waveShift * 0.3, h * 0.92 - offset * 0.7,
+      w * 0.88 - waveShift * 0.2, h * 0.98 - offset * 0.7,
+      w, h * 0.96 - offset * 0.7,
     );
     path2.lineTo(w, 0);
     path2.close();
@@ -414,5 +468,6 @@ class AppTopWavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant AppTopWavePainter oldDelegate) =>
+      oldDelegate.animationValue != animationValue;
 }

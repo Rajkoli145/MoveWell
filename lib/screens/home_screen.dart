@@ -321,18 +321,13 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF7FAFD),
       body: Stack(
         children: [
-          // 1. Organic Smooth Light Blue Top-Right Wave Background
-          Positioned(
+          // 1. Organic Smooth Light Blue Top-Right Wave Background (Floating Animation)
+          const Positioned(
             top: 0,
             right: 0,
             left: 0,
             height: 320,
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: const AppTopWavePainter(),
-                size: const Size(double.infinity, 320),
-              ),
-            ),
+            child: FloatingWaveBackground(height: 320),
           ),
 
           // 2. Main Scrollable View
@@ -1108,12 +1103,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 7),
 
-                // Start Workout Interactive SlideActionPillButton (Draggable & Hold-to-slide)
-                SlideActionPillButton(
-                  height: 32,
-                  fontSize: 11,
-                  label: 'Start Workout',
-                  onTap: widget.onStartWorkout ?? _showWorkoutStartSheet,
+                // Start Workout Interactive SlideActionPillButton (Draggable & Hold-to-slide, petite compact size)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 140,
+                    child: SlideActionPillButton(
+                      height: 28,
+                      fontSize: 10,
+                      label: 'Start Workout',
+                      onTap: widget.onStartWorkout ?? _showWorkoutStartSheet,
+                    ),
+                  ),
                 ),
               ],
             ),

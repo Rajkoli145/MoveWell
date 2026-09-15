@@ -507,18 +507,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          // Subtle organic background wave
-          Positioned(
+          // Subtle organic background wave (floating animation)
+          const Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: 280,
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: const AppTopWavePainter(),
-                size: const Size(double.infinity, 280),
-              ),
-            ),
+            child: FloatingWaveBackground(height: 280),
           ),
 
           SafeArea(

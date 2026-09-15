@@ -391,17 +391,12 @@ class _NutritionScreenState extends State<NutritionScreen> {
       body: Stack(
         children: [
           // Background wave
-          Positioned(
+          const Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: 280,
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: const AppTopWavePainter(),
-                size: const Size(double.infinity, 280),
-              ),
-            ),
+            child: FloatingWaveBackground(height: 280),
           ),
 
           SafeArea(
