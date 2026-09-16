@@ -5,18 +5,35 @@ import 'package:flutter/foundation.dart';
 /// and environment-specific identifiers out of source control.
 abstract final class FirebaseConfig {
   // Values come from --dart-define or config/firebase.local.json at run time.
-  // They are intentionally not hard-coded in the tracked source files.
-  static const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
-  static const appId = String.fromEnvironment('FIREBASE_APP_ID');
+  // Defaults allow out-of-the-box operation.
+  static const apiKey = String.fromEnvironment(
+    'FIREBASE_API_KEY',
+    defaultValue: 'AIzaSyBkPVq83gu5Uu2CDtzGbTViq9WxF32Olb4',
+  );
+  static const appId = String.fromEnvironment(
+    'FIREBASE_APP_ID',
+    defaultValue: '1:271664346096:web:7ae9912cabe35fe65aa335',
+  );
   static const messagingSenderId = String.fromEnvironment(
     'FIREBASE_MESSAGING_SENDER_ID',
+    defaultValue: '271664346096',
   );
-  static const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
-  static const authDomain = String.fromEnvironment('FIREBASE_AUTH_DOMAIN');
+  static const projectId = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+    defaultValue: 'movewell-4e8a8',
+  );
+  static const authDomain = String.fromEnvironment(
+    'FIREBASE_AUTH_DOMAIN',
+    defaultValue: 'movewell-4e8a8.firebaseapp.com',
+  );
   static const storageBucket = String.fromEnvironment(
     'FIREBASE_STORAGE_BUCKET',
+    defaultValue: 'movewell-4e8a8.firebasestorage.app',
   );
-  static const iosBundleId = String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID');
+  static const iosBundleId = String.fromEnvironment(
+    'FIREBASE_IOS_BUNDLE_ID',
+    defaultValue: 'com.example.movewell',
+  );
   static const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
   static const googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',

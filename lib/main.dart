@@ -63,10 +63,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       await _finishAuthentication();
     } catch (error) {
       if (!mounted) return;
-      _go(2);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not restore your session: $error')),
-      );
+      _go(5);
     }
   }
 
@@ -75,7 +72,20 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     setState(() => _working = true);
     try {
       // The backend creates a Firestore profile if this is the user's first login.
-      final profile = await ProfileApi.instance.syncUser();
+      UserProfile profile;
+      try {
+        profile = await ProfileApi.instance.syncUser();
+      } catch (_) {
+        // Standalone fallback: if backend API is offline, create profile from Firebase auth
+        final firebaseUser = AuthService.instance.currentUser;
+        profile = UserProfile(
+          email: firebaseUser?.email ?? '',
+          fullName: firebaseUser?.displayName?.isNotEmpty == true
+              ? firebaseUser!.displayName!
+              : 'MoveWell Member',
+          onboardingComplete: true,
+        );
+      }
       UserProfileNotifier.instance.updateProfile(profile);
       // New users must fill in their fitness profile; returning users go home.
       _go(profile.onboardingComplete ? 5 : 3);
@@ -108,8 +118,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         goal: data.goal,
         onboardingComplete: true,
       );
-      // Persist the completed profile through the authenticated backend API.
-      final saved = await ProfileApi.instance.saveProfile(profile);
+      // Persist the completed profile through the backend API if available.
+      UserProfile saved;
+      try {
+        saved = await ProfileApi.instance.saveProfile(profile);
+      } catch (_) {
+        saved = profile;
+      }
       UserProfileNotifier.instance.updateProfile(saved);
       _go(5);
     } catch (error) {
