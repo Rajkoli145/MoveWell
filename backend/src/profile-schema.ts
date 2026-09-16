@@ -50,3 +50,11 @@ export const dailyWaterSchema = z.object({
   glasses: z.number().int().min(0).max(30),
   localDate,
 }).strict();
+
+// A manual check-in is available for habits that happen away from the app,
+// such as a walk or an early-morning movement session.
+export const challengeCheckInSchema = z.object({
+  challengeId: z.enum(['move-5-days', 'morning-momentum']),
+  localDate,
+  completed: z.boolean(),
+}).strict();

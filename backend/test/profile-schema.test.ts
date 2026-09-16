@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { profileUpdateSchema, workoutSessionCreateSchema } from '../src/profile-schema.js';
+import {
+  challengeCheckInSchema,
+  profileUpdateSchema,
+  workoutSessionCreateSchema,
+} from '../src/profile-schema.js';
 
 const validProfile = {
   fullName: 'Asha Rao',
@@ -43,5 +47,20 @@ describe('workoutSessionCreateSchema', () => {
       localDate: '2026-09-15',
       completedInMorning: true,
     }).routineId, null);
+  });
+});
+
+describe('challengeCheckInSchema', () => {
+  it('accepts supported daily habits and rejects arbitrary Firestore fields', () => {
+    assert.equal(challengeCheckInSchema.parse({
+      challengeId: 'move-5-days',
+      localDate: '2026-09-16',
+      completed: true,
+    }).completed, true);
+    assert.equal(challengeCheckInSchema.safeParse({
+      challengeId: 'unknown-challenge',
+      localDate: '2026-09-16',
+      completed: true,
+    }).success, false);
   });
 });

@@ -11,6 +11,7 @@ import {
   routineFavoriteSchema,
   workoutSessionCreateSchema,
   dailyWaterSchema,
+  challengeCheckInSchema,
 } from './profile-schema.js';
 
 export const app = express();
@@ -263,6 +264,28 @@ app.put('/api/daily-water', async (req, res, next) => {
     }, { merge: true });
     const challenge = await challengeRef.get();
     res.json({ data: { waterGlasses: water.glasses, ...challengeResponse(challenge.data()) } });
+  } catch (error) { next(error); }
+});
+
+app.put('/api/challenge-check-in', async (req, res, next) => {
+  try {
+    const checkIn = challengeCheckInSchema.parse(req.body);
+    const userRef = db.collection('users').doc(req.firebaseUser!.uid);
+    const challengeRef = userRef.collection('challengeProgress').doc(weekKey(checkIn.localDate));
+    // Manual check-ins cover real-world habits. A user can undo an accidental
+    // tap, while recorded workouts continue to add movement automatically.
+    const field = checkIn.challengeId === 'move-5-days'
+      ? 'movementDays'
+      : 'morningWorkoutDays';
+    await challengeRef.set({
+      weekKey: weekKey(checkIn.localDate),
+      [field]: checkIn.completed
+        ? FieldValue.arrayUnion(checkIn.localDate)
+        : FieldValue.arrayRemove(checkIn.localDate),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    const challenge = await challengeRef.get();
+    res.json({ data: challengeResponse(challenge.data()) });
   } catch (error) { next(error); }
 });
 

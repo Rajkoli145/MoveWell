@@ -2,11 +2,9 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
 
 import '../models/workout_plan.dart';
 import '../palette.dart';
@@ -224,136 +222,108 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 }
 
 class ExerciseVisual extends StatelessWidget {
-  /// Selects one instructor pose from the generated exercise sprite sheets.
+  /// Selects a standalone instructor image. Every exercise has its own asset,
+  /// which prevents adjacent contact-sheet poses from leaking into the card.
   const ExerciseVisual({super.key, required this.exercise, this.height = 150});
   final String exercise;
   final double height;
 
-  (String, int) get _tile {
-    // The first matching phrase selects a [grid asset, tile index] pair.
+  String get _asset {
     final name = exercise.toLowerCase();
+    if (name.contains('warm up') || name.contains('joint mobility')) {
+      return 'assets/images/exercise_warmup.png';
+    }
+    if (name.contains('lunge') && name.contains('squat')) {
+      return 'assets/images/exercise_lunge.png';
+    }
+    if (name.contains('push press')) {
+      return 'assets/images/exercise_push_press.png';
+    }
+    if (name.contains('plank') && name.contains('mountain')) {
+      return 'assets/images/exercise_mountain_climber.png';
+    }
+    if (name.contains('cool down') || name.contains('full body stretch')) {
+      return 'assets/images/exercise_cooldown.png';
+    }
     if (name.contains('barbell squat'))
-      return (AppAssets.exercisesCardioYogaGrid, 0);
+      return 'assets/images/exercise_barbell_squat.png';
     if (name.contains('bench press'))
-      return (AppAssets.exercisesCardioYogaGrid, 1);
+      return 'assets/images/exercise_bench_press.png';
     if (name.contains('pull-up') || name.contains('pull up'))
-      return (AppAssets.exercisesCardioYogaGrid, 2);
+      return 'assets/images/exercise_pull_up.png';
     if (name.contains('overhead press'))
-      return (AppAssets.exercisesCardioYogaGrid, 3);
-    if (name.contains('sprint')) return (AppAssets.exercisesCardioYogaGrid, 4);
+      return 'assets/images/exercise_overhead_press.png';
+    if (name.contains('sprint')) return 'assets/images/exercise_sprint.png';
     if (name.contains('jump rope'))
-      return (AppAssets.exercisesCardioYogaGrid, 5);
+      return 'assets/images/exercise_jump_rope.png';
     if (name.contains('high knee'))
-      return (AppAssets.exercisesCardioYogaGrid, 6);
+      return 'assets/images/exercise_high_knees.png';
     if (name.contains('kettlebell'))
-      return (AppAssets.exercisesCardioYogaGrid, 7);
+      return 'assets/images/exercise_kettlebell_swing.png';
     if (name.contains('sun salutation'))
-      return (AppAssets.exercisesCardioYogaGrid, 8);
-    if (name.contains('warrior')) return (AppAssets.exercisesCardioYogaGrid, 9);
-    if (name.contains('cobra') && !name.contains('downward'))
-      return (AppAssets.exercisesCardioYogaGrid, 10);
-    if (name.contains('pigeon')) return (AppAssets.exercisesCardioYogaGrid, 11);
-    if (name.contains('plank hold') || name.contains('forearm plank'))
-      return (AppAssets.exercisesCoreMobilityGrid, 0);
-    if (name.contains('bicycle'))
-      return (AppAssets.exercisesCoreMobilityGrid, 1);
-    if (name.contains('russian'))
-      return (AppAssets.exercisesCoreMobilityGrid, 2);
-    if (name.contains('leg raise'))
-      return (AppAssets.exercisesCoreMobilityGrid, 3);
-    if (name.contains('cat-cow'))
-      return (AppAssets.exercisesCoreMobilityGrid, 4);
-    if (name.contains('deep squat'))
-      return (AppAssets.exercisesCoreMobilityGrid, 5);
-    if (name.contains('thoracic'))
-      return (AppAssets.exercisesCoreMobilityGrid, 6);
+      return 'assets/images/exercise_sun_salutation.png';
+    if (name.contains('warrior'))
+      return 'assets/images/exercise_warrior_pose.png';
     if (name.contains('downward dog'))
-      return (AppAssets.exercisesCoreMobilityGrid, 7);
+      return 'assets/images/exercise_downward_dog_cobra.png';
+    if (name.contains('cobra')) return 'assets/images/exercise_cobra_pose.png';
+    if (name.contains('pigeon'))
+      return 'assets/images/exercise_pigeon_stretch.png';
+    if (name.contains('plank jack'))
+      return 'assets/images/exercise_plank_jack.png';
+    if (name.contains('plank')) return 'assets/images/exercise_plank_hold.png';
+    if (name.contains('bicycle'))
+      return 'assets/images/exercise_bicycle_crunch.png';
+    if (name.contains('russian'))
+      return 'assets/images/exercise_russian_twist.png';
+    if (name.contains('leg raise'))
+      return 'assets/images/exercise_leg_raise.png';
+    if (name.contains('cat-cow')) return 'assets/images/exercise_cat_cow.png';
+    if (name.contains('deep squat'))
+      return 'assets/images/exercise_deep_squat.png';
+    if (name.contains('thoracic'))
+      return 'assets/images/exercise_thoracic_rotation.png';
     if (name.contains('dumbbell row'))
-      return (AppAssets.exercisesCoreMobilityGrid, 8);
+      return 'assets/images/exercise_dumbbell_row.png';
     if (name.contains('goblet'))
-      return (AppAssets.exercisesCoreMobilityGrid, 9);
+      return 'assets/images/exercise_goblet_squat.png';
     if (name.contains('jump lunge'))
-      return (AppAssets.exercisesCoreMobilityGrid, 10);
-    if (name.contains('warm up') || name.contains('stretch'))
-      return (AppAssets.exercisesCoreMobilityGrid, 11);
-    if (name.contains('incline')) return (AppAssets.exercisesLevelGrid, 1);
-    if (name.contains('glute')) return (AppAssets.exercisesLevelGrid, 2);
-    if (name.contains('bird dog')) return (AppAssets.exercisesLevelGrid, 3);
+      return 'assets/images/exercise_jump_lunge.png';
+    if (name.contains('incline'))
+      return 'assets/images/exercise_incline_push_up.png';
+    if (name.contains('glute'))
+      return 'assets/images/exercise_glute_bridge.png';
+    if (name.contains('bird dog')) return 'assets/images/exercise_bird_dog.png';
     if (name.contains('reverse lunge') || name.contains('lunge'))
-      return (AppAssets.exercisesLevelGrid, 4);
+      return 'assets/images/exercise_reverse_lunge.png';
     if (name.contains('push-up') || name.contains('push up'))
-      return (AppAssets.exercisesLevelGrid, 5);
-    if (name.contains('shoulder press') || name.contains('push press'))
-      return (AppAssets.exercisesLevelGrid, 6);
-    if (name.contains('mountain')) return (AppAssets.exercisesLevelGrid, 7);
-    if (name.contains('jump squat')) return (AppAssets.exercisesLevelGrid, 8);
-    if (name.contains('burpee')) return (AppAssets.exercisesLevelGrid, 9);
-    if (name.contains('deadlift')) return (AppAssets.exercisesLevelGrid, 10);
-    if (name.contains('plank jack')) return (AppAssets.exercisesLevelGrid, 11);
-    return (AppAssets.exercisesLevelGrid, 0);
+      return 'assets/images/exercise_standard_push_up.png';
+    if (name.contains('shoulder press'))
+      return 'assets/images/exercise_shoulder_press.png';
+    if (name.contains('mountain'))
+      return 'assets/images/exercise_mountain_climber.png';
+    if (name.contains('jump squat'))
+      return 'assets/images/exercise_jump_squat.png';
+    if (name.contains('burpee')) return 'assets/images/exercise_burpee.png';
+    if (name.contains('deadlift'))
+      return 'assets/images/exercise_single_leg_deadlift.png';
+    return 'assets/images/exercise_bodyweight_squat.png';
   }
 
   @override
   Widget build(BuildContext context) => SizedBox(
     height: height,
     width: double.infinity,
-    child: _SpriteTile(asset: _tile.$1, index: _tile.$2),
+    child: ColoredBox(
+      color: const Color(0xFFE8F4FD),
+      child: Image.asset(
+        _asset,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
+        filterQuality: FilterQuality.high,
+      ),
+    ),
   );
-}
-
-class _SpriteTile extends StatelessWidget {
-  const _SpriteTile({required this.asset, required this.index});
-  final String asset;
-  final int index;
-  // Decode each large image once. Reusing it avoids work as exercises change.
-  static final Map<String, Future<ui.Image>> _cache = {};
-
-  Future<ui.Image> _load() => _cache.putIfAbsent(asset, () async {
-    final data = await rootBundle.load(asset);
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    return (await codec.getNextFrame()).image;
-  });
-
-  @override
-  Widget build(BuildContext context) => FutureBuilder<ui.Image>(
-    future: _load(),
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) return const ColoredBox(color: Color(0xFFE8F4FD));
-      return CustomPaint(painter: _SpritePainter(snapshot.data!, index));
-    },
-  );
-}
-
-class _SpritePainter extends CustomPainter {
-  const _SpritePainter(this.image, this.index);
-  final ui.Image image;
-  final int index;
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Each source sheet contains four columns and three rows. Crop one tile
-    // and scale it with BoxFit.cover so it fills the exercise card cleanly.
-    final tileWidth = image.width / 4;
-    final tileHeight = image.height / 3;
-    final tile = Rect.fromLTWH(
-      (index % 4) * tileWidth,
-      (index ~/ 4) * tileHeight,
-      tileWidth,
-      tileHeight,
-    );
-    final fitted = applyBoxFit(BoxFit.cover, tile.size, size);
-    final crop = Alignment.center.inscribe(fitted.source, tile);
-    canvas.drawImageRect(
-      image,
-      crop,
-      Offset.zero & size,
-      Paint()..filterQuality = FilterQuality.high,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _SpritePainter oldDelegate) =>
-      oldDelegate.image != image || oldDelegate.index != index;
 }
 
 class WorkoutCompleteScreen extends StatelessWidget {

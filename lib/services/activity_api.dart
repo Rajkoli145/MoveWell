@@ -14,9 +14,11 @@ class WeeklyChallenge {
     required this.icon,
     required this.progress,
     required this.goal,
+    required this.days,
   });
   final String id, title, description, icon;
   final int progress, goal;
+  final List<String> days;
   bool get isComplete => progress >= goal;
   factory WeeklyChallenge.fromJson(Map<String, dynamic> json) =>
       WeeklyChallenge(
@@ -26,6 +28,9 @@ class WeeklyChallenge {
         icon: json['icon'] as String,
         progress: (json['progress'] as num).round(),
         goal: (json['goal'] as num).round(),
+        days: (json['days'] as List<dynamic>? ?? const [])
+            .map((day) => day.toString())
+            .toList(),
       );
 }
 
@@ -95,6 +100,28 @@ class ActivityApi {
       }),
     );
     return _summary(response);
+  }
+
+  Future<ActivitySummary> checkInChallenge({
+    required String challengeId,
+    required bool completed,
+  }) async {
+    final response = await _client.put(
+      Uri.parse('${FirebaseConfig.backendBaseUrl}/api/challenge-check-in'),
+      headers: await ProfileApi.instance.authHeaders(),
+      body: jsonEncode({
+        'challengeId': challengeId,
+        'completed': completed,
+        'localDate': _date(),
+      }),
+    );
+    // Firestore can finish the write even if an older development server
+    // returns a response shape that the current app no longer expects. Check
+    // only the status here, then load the canonical dashboard representation.
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _summary(response);
+    }
+    return dashboard();
   }
 
   ActivitySummary _summary(http.Response response) {

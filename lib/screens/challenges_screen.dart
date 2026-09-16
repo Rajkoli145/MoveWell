@@ -12,6 +12,55 @@ class ChallengesScreen extends StatefulWidget {
 
 class _ChallengesScreenState extends State<ChallengesScreen> {
   late Future<ActivitySummary> _summary = ActivityApi.instance.dashboard();
+  bool _updating = false;
+  String _today() => DateTime.now().toIso8601String().substring(0, 10);
+
+  Future<void> _toggleCheckIn(WeeklyChallenge challenge) async {
+    if (_updating) return;
+    final completedToday = challenge.days.contains(_today());
+    setState(() => _updating = true);
+    try {
+      final summary = await ActivityApi.instance.checkInChallenge(
+        challengeId: challenge.id,
+        completed: !completedToday,
+      );
+      if (mounted) {
+        setState(() {
+          _summary = Future.value(summary);
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update today\'s check-in: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
+
+  Future<void> _setWater(int glasses) async {
+    if (_updating) return;
+    setState(() => _updating = true);
+    try {
+      final summary = await ActivityApi.instance.setWater(glasses.clamp(0, 30));
+      if (mounted) {
+        setState(() {
+          _summary = Future.value(summary);
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update hydration: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
+
   IconData _icon(String name) => switch (name) {
     'water' => Icons.water_drop_rounded,
     'sun' => Icons.wb_sunny_rounded,
@@ -53,8 +102,13 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         }
         final challenges = snapshot.data!.challenges;
         return RefreshIndicator(
-          onRefresh: () async =>
-              setState(() => _summary = ActivityApi.instance.dashboard()),
+          onRefresh: () async {
+            final refreshed = ActivityApi.instance.dashboard();
+            setState(() {
+              _summary = refreshed;
+            });
+            await refreshed;
+          },
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -68,6 +122,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
               const SizedBox(height: 18),
               ...challenges.map((challenge) {
                 final color = _color(challenge.icon);
+                final completedToday = challenge.days.contains(_today());
                 return Container(
                   margin: const EdgeInsets.only(bottom: 15),
                   padding: const EdgeInsets.all(18),
@@ -138,6 +193,106 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                           color: color,
                         ),
                       ),
+                      if (challenge.id == 'hydration-streak') ...[
+                        const SizedBox(height: 14),
+                        Text(
+                          'Today\'s water',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            IconButton.outlined(
+                              onPressed:
+                                  _updating || snapshot.data!.waterGlasses == 0
+                                  ? null
+                                  : () => _setWater(
+                                      snapshot.data!.waterGlasses - 1,
+                                    ),
+                              icon: const Icon(Icons.remove_rounded),
+                              color: color,
+                            ),
+                            Expanded(
+                              child: Text(
+                                '${snapshot.data!.waterGlasses} / 8 glasses',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w800,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: _updating
+                                  ? null
+                                  : () => _setWater(
+                                      snapshot.data!.waterGlasses + 1,
+                                    ),
+                              icon: const Icon(Icons.add_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: color,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (snapshot.data!.waterGlasses < 8) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _updating ? null : () => _setWater(8),
+                              icon: const Icon(
+                                Icons.water_drop_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('I reached 8 glasses today'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: color,
+                                side: BorderSide(
+                                  color: color.withValues(alpha: .55),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ] else ...[
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _updating
+                                ? null
+                                : () => _toggleCheckIn(challenge),
+                            icon: Icon(
+                              completedToday
+                                  ? Icons.undo_rounded
+                                  : Icons.check_circle_outline_rounded,
+                              size: 18,
+                            ),
+                            label: Text(
+                              completedToday
+                                  ? 'Undo today\'s check-in'
+                                  : 'Mark today complete',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: color,
+                              side: BorderSide(
+                                color: color.withValues(alpha: .55),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 );
