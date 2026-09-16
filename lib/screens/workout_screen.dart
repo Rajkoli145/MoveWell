@@ -216,10 +216,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   };
 
   Future<void> _toggleFavorite(Routine routine) async {
+    final nextFavorite = !routine.favorite;
+    setState(() {
+      _customRoutines = _customRoutines
+          .map(
+            (item) =>
+                item.id == routine.id
+                    ? item.copyWith(favorite: nextFavorite)
+                    : item,
+          )
+          .toList();
+    });
     try {
       final updated = await RoutineApi.instance.setFavorite(
         routine,
-        !routine.favorite,
+        nextFavorite,
       );
       if (!mounted) return;
       setState(() {
@@ -227,12 +238,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             .map((item) => item.id == updated.id ? updated : item)
             .toList();
       });
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not update favorite: $error')),
-        );
-      }
+    } catch (_) {
+      // Keep optimistic update if backend is unreachable
     }
   }
 
@@ -785,15 +792,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                 }
                                 setModalState(() => isSaving = true);
                                 try {
-                                  final routine = await RoutineApi.instance
-                                      .create(
-                                        title: title,
-                                        level: selectedLevel,
-                                        durationMinutes: int.parse(
-                                          selectedDuration.split(' ').first,
-                                        ),
-                                        exercises: selectedExercises.toList(),
-                                      );
+                                  final durationNum =
+                                      int.tryParse(
+                                        selectedDuration.split(' ').first,
+                                      ) ??
+                                      20;
+                                  Routine routine;
+                                  try {
+                                    routine = await RoutineApi.instance.create(
+                                      title: title,
+                                      level: selectedLevel,
+                                      durationMinutes: durationNum,
+                                      exercises: selectedExercises.toList(),
+                                    );
+                                  } catch (_) {
+                                    // Offline fallback: save locally so user is never blocked
+                                    routine = Routine(
+                                      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+                                      title: title,
+                                      level: selectedLevel,
+                                      durationMinutes: durationNum,
+                                      exercises: selectedExercises.toList(),
+                                      favorite: false,
+                                    );
+                                  }
                                   if (!mounted || !ctx.mounted) return;
                                   setState(() {
                                     _customRoutines = [

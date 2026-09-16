@@ -9,9 +9,11 @@ class AuthScreen extends StatefulWidget {
     super.key,
     required this.onAuthenticated,
     required this.onForgot,
+    this.onSignUpSuccess,
   });
 
   final Future<void> Function() onAuthenticated;
+  final Future<void> Function()? onSignUpSuccess;
   final VoidCallback onForgot;
 
   @override
@@ -35,7 +37,11 @@ class _AuthScreenState extends State<AuthScreen> {
     });
     try {
       await operation();
-      await widget.onAuthenticated();
+      if (!_isLogin && widget.onSignUpSuccess != null) {
+        await widget.onSignUpSuccess!();
+      } else {
+        await widget.onAuthenticated();
+      }
     } catch (error) {
       if (mounted) {
         setState(

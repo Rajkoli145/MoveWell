@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../config/firebase_config.dart';
@@ -80,6 +81,14 @@ class AuthService {
   }
 
   String readableError(Object error) {
+    if (error is PlatformException) {
+      if (error.code == 'google_sign_in' ||
+          (error.message?.contains('GIDClientID') ?? false) ||
+          (error.message?.contains('No active configuration') ?? false)) {
+        return 'Google Sign-In is only available on Web or with registered iOS OAuth credentials. Please sign in with Email & Password.';
+      }
+      return error.message ?? 'Authentication error occurred.';
+    }
     // Firebase error codes are technical, so translate common ones for users.
     if (error is FirebaseAuthException) {
       switch (error.code) {

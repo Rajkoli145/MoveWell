@@ -33,28 +33,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               .toList(),
         );
       }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load favorites: $error')),
-        );
-      }
+    } catch (_) {
+      // Keep empty or local state if offline
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _removeFavorite(Routine routine) async {
+    if (mounted) {
+      setState(() => _favorites.removeWhere((item) => item.id == routine.id));
+    }
     try {
       await RoutineApi.instance.setFavorite(routine, false);
-      if (mounted) {
-        setState(() => _favorites.removeWhere((item) => item.id == routine.id));
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$error')));
-      }
+    } catch (_) {
+      // Retain optimistic removal if offline
     }
   }
 

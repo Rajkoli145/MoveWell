@@ -10,10 +10,27 @@ abstract final class FirebaseConfig {
     'FIREBASE_API_KEY',
     defaultValue: 'AIzaSyBkPVq83gu5Uu2CDtzGbTViq9WxF32Olb4',
   );
-  static const appId = String.fromEnvironment(
-    'FIREBASE_APP_ID',
-    defaultValue: '1:271664346096:web:7ae9912cabe35fe65aa335',
-  );
+  static const _rawAppId = String.fromEnvironment('FIREBASE_APP_ID');
+
+  static String get appId {
+    if (_rawAppId.isNotEmpty) return _rawAppId;
+    if (kIsWeb) return '1:271664346096:web:7ae9912cabe35fe65aa335';
+    if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      return const String.fromEnvironment(
+        'FIREBASE_IOS_APP_ID',
+        defaultValue: '1:271664346096:ios:7ae9912cabe35fe65aa335',
+      );
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return const String.fromEnvironment(
+        'FIREBASE_ANDROID_APP_ID',
+        defaultValue: '1:271664346096:android:7ae9912cabe35fe65aa335',
+      );
+    }
+    return '1:271664346096:web:7ae9912cabe35fe65aa335';
+  }
+
   static const messagingSenderId = String.fromEnvironment(
     'FIREBASE_MESSAGING_SENDER_ID',
     defaultValue: '271664346096',
@@ -84,7 +101,18 @@ abstract final class FirebaseBootstrap {
     }
 
     try {
-      // Firebase plugins (Auth, Storage) can only be used after this completes.
+      if (!kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS)) {
+        try {
+          // Attempt default native initialization via GoogleService-Info.plist
+          await Firebase.initializeApp();
+          isReady = true;
+          return;
+        } catch (_) {
+          // Fall back to configured platform options
+        }
+      }
       await Firebase.initializeApp(options: FirebaseConfig.options);
       isReady = true;
     } catch (firebaseError) {

@@ -67,7 +67,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
   }
 
-  Future<void> _finishAuthentication() async {
+  Future<void> _finishAuthentication({bool isSignUp = false}) async {
     if (_working) return;
     setState(() => _working = true);
     try {
@@ -75,6 +75,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       UserProfile profile;
       try {
         profile = await ProfileApi.instance.syncUser();
+        if (isSignUp) {
+          profile = profile.copyWith(onboardingComplete: false);
+        }
       } catch (_) {
         // Standalone fallback: if backend API is offline, create profile from Firebase auth
         final firebaseUser = AuthService.instance.currentUser;
@@ -83,12 +86,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           fullName: firebaseUser?.displayName?.isNotEmpty == true
               ? firebaseUser!.displayName!
               : 'MoveWell Member',
-          onboardingComplete: true,
+          onboardingComplete: !isSignUp,
         );
       }
       UserProfileNotifier.instance.updateProfile(profile);
-      // New users must fill in their fitness profile; returning users go home.
-      _go(profile.onboardingComplete ? 5 : 3);
+      // New users and sign-ups must fill in their fitness profile; returning users go home.
+      _go((isSignUp || !profile.onboardingComplete) ? 3 : 5);
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -151,7 +154,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         break;
       case 2:
         currentWidget = AuthScreen(
-          onAuthenticated: _finishAuthentication,
+          onAuthenticated: () => _finishAuthentication(isSignUp: false),
+          onSignUpSuccess: () => _finishAuthentication(isSignUp: true),
           onForgot: () => _go(4),
         );
         break;
