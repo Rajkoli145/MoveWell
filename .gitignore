@@ -53,3 +53,4 @@ app.*.map.json
 /ios/Runner/GoogleService-Info.plist
 **/service-account*.json
 **/*firebase-adminsdk*.json
+VIVA_GUIDE.md
