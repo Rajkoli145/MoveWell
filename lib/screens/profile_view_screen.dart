@@ -836,29 +836,10 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                           ),
                         ),
                         child: ClipOval(
-                          child: _profile.avatarPath.startsWith('http')
-                              ? Image.network(
-                                  _profile.avatarPath,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Container(
-                                    color: const Color(0xFFD6EDFC),
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: Palette.ink,
-                                    ),
-                                  ),
-                                )
-                              : Image.asset(
-                                  _profile.avatarPath,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Container(
-                                    color: const Color(0xFFD6EDFC),
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: Palette.ink,
-                                    ),
-                                  ),
-                                ),
+                          child: AppAvatarImage(
+                            avatarPath: _profile.avatarPath,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       Positioned(

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/user_profile.dart';
 import '../palette.dart';
@@ -511,11 +512,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Future<void> _showAvatarPicker() async {
+  Future<void> _pickAvatar(ImageSource source) async {
     if (_isUploadingAvatar) return;
     setState(() => _isUploadingAvatar = true);
     try {
-      final photoUrl = await ProfilePhotoService.instance.pickAndUpload();
+      final photoUrl = await ProfilePhotoService.instance.pickAndUpload(
+        source: source,
+      );
       if (!mounted || photoUrl == null) return;
       setState(() => _avatarPath = photoUrl);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -523,16 +526,91 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           content: Text(
             'Photo selected. Tap Save Changes to update your profile.',
           ),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not upload photo: $error')));
+      ).showSnackBar(SnackBar(content: Text('Could not select photo: $error')));
     } finally {
       if (mounted) setState(() => _isUploadingAvatar = false);
     }
+  }
+
+  void _showAvatarPicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Change Profile Picture',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Palette.ink,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE0F2FE),
+                  child: Icon(Icons.photo_library_rounded, color: Color(0xFF0284C7)),
+                ),
+                title: Text(
+                  'Choose from Gallery',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAvatar(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFDCFCE7),
+                  child: Icon(Icons.camera_alt_rounded, color: Color(0xFF16A34A)),
+                ),
+                title: Text(
+                  'Take a Photo',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAvatar(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -708,29 +786,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   child: ClipOval(
-                    child: _avatarPath.startsWith('http')
-                        ? Image.network(
-                            _avatarPath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: const Color(0xFFD6EDFC),
-                              child: const Icon(
-                                Icons.person,
-                                color: Palette.ink,
-                              ),
-                            ),
-                          )
-                        : Image.asset(
-                            _avatarPath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: const Color(0xFFD6EDFC),
-                              child: const Icon(
-                                Icons.person,
-                                color: Palette.ink,
-                              ),
-                            ),
-                          ),
+                    child: AppAvatarImage(
+                      avatarPath: _avatarPath,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 Positioned(

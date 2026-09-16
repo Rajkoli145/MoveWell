@@ -795,30 +795,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   child: ClipOval(
-                    child:
-                        _profileNotifier.profile.avatarPath.startsWith('http')
-                        ? Image.network(
-                            _profileNotifier.profile.avatarPath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: const Color(0xFFD6EDFC),
-                              child: const Icon(
-                                Icons.person,
-                                color: Palette.ink,
-                              ),
-                            ),
-                          )
-                        : Image.asset(
-                            _profileNotifier.profile.avatarPath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: const Color(0xFFD6EDFC),
-                              child: const Icon(
-                                Icons.person,
-                                color: Palette.ink,
-                              ),
-                            ),
-                          ),
+                    child: AppAvatarImage(
+                      avatarPath: _profileNotifier.profile.avatarPath,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
@@ -1018,8 +998,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: _buildMetricColumn(
               icon: Icons.local_fire_department_rounded,
-              iconColor: const Color(0xFFEA580C),
-              iconBg: const Color(0xFFFFEDD5),
+              iconColor: const Color(0xFF0284C7),
+              iconBg: const Color(0xFFE0F2FE),
               value: '$_caloriesBurned',
               label: 'Calories',
               subtext: 'of 2,000',

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -41,6 +42,57 @@ class AppAssets {
   static const articleNutrition = 'assets/images/article_nutrition.png';
   static const articleConsistency = 'assets/images/article_consistency.png';
   static const articleRoutine = 'assets/images/article_routine.png';
+}
+
+class AppAvatarImage extends StatelessWidget {
+  const AppAvatarImage({
+    super.key,
+    required this.avatarPath,
+    this.fit = BoxFit.cover,
+    this.placeholderColor = const Color(0xFFD6EDFC),
+    this.iconColor = Palette.ink,
+  });
+
+  final String avatarPath;
+  final BoxFit fit;
+  final Color placeholderColor;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final clean = avatarPath.trim();
+    if (clean.startsWith('data:image')) {
+      try {
+        final comma = clean.indexOf(',');
+        if (comma != -1) {
+          final bytes = base64Decode(clean.substring(comma + 1));
+          return Image.memory(
+            bytes,
+            fit: fit,
+            errorBuilder: (_, _, _) => _placeholder(),
+          );
+        }
+      } catch (_) {}
+    }
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      return Image.network(
+        clean,
+        fit: fit,
+        errorBuilder: (_, _, _) => _placeholder(),
+      );
+    }
+    return Image.asset(
+      clean.isEmpty ? AppAssets.avatar : clean,
+      fit: fit,
+      errorBuilder: (_, _, _) => _placeholder(),
+    );
+  }
+
+  Widget _placeholder() => Container(
+    color: placeholderColor,
+    alignment: Alignment.center,
+    child: Icon(Icons.person, color: iconColor),
+  );
 }
 
 class MoveWellLogo extends StatelessWidget {

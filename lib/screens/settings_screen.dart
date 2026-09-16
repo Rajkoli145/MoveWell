@@ -822,10 +822,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       border: Border.all(color: const Color(0xFFD6EDFC), width: 1.5),
                     ),
                     child: ClipOval(
-                      child: Image.asset(
-                        _profile.avatarPath,
+                      child: AppAvatarImage(
+                        avatarPath: _profile.avatarPath,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(Icons.person, color: Palette.ink),
                       ),
                     ),
                   ),

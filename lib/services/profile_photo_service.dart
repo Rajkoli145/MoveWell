@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,22 +13,21 @@ class ProfilePhotoService {
   static final instance = ProfilePhotoService._();
   final ImagePicker _picker = ImagePicker();
 
-  Future<String?> pickAndUpload() async {
-    // The gallery can be cancelled, which is not an error.
+  Future<String?> pickAndUpload({
+    ImageSource source = ImageSource.gallery,
+  }) async {
+    // The picker can be cancelled, which is not an error.
     final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1200,
-      imageQuality: 85,
+      source: source,
+      maxWidth: 600,
+      maxHeight: 600,
+      imageQuality: 80,
     );
     if (image == null) {
       return null;
     }
 
-    final User? user = AuthService.instance.currentUser;
-    if (user == null) {
-      throw StateError('Please sign in before changing your photo.');
-    }
-    // Check the byte size before uploading to respect Storage security limits.
+    // Check the byte size before uploading to respect Storage limits.
     final bytes = await image.readAsBytes();
     if (bytes.length > 5 * 1024 * 1024) {
       throw StateError('Choose an image smaller than 5 MB.');
@@ -36,12 +37,26 @@ class ProfilePhotoService {
         ? image.name.split('.').last.toLowerCase()
         : 'jpg';
     final contentType = extension == 'png' ? 'image/png' : 'image/jpeg';
-    // A deterministic path replaces a user's older avatar rather than creating
-    // an unbounded list of profile-photo files.
-    final reference = FirebaseStorage.instance.ref(
-      'users/${user.uid}/avatar/profile.$extension',
-    );
-    await reference.putData(bytes, SettableMetadata(contentType: contentType));
-    return reference.getDownloadURL();
+
+    // 1. Attempt uploading to Firebase Storage if signed in
+    final User? user = AuthService.instance.currentUser;
+    if (user != null) {
+      try {
+        final reference = FirebaseStorage.instance.ref(
+          'users/${user.uid}/avatar/profile.$extension',
+        );
+        await reference.putData(
+          bytes,
+          SettableMetadata(contentType: contentType),
+        );
+        return await reference.getDownloadURL();
+      } catch (_) {
+        // Storage unreachable or restricted: proceed to local base64 fallback
+      }
+    }
+
+    // 2. Offline / local fallback: persistent data URI
+    final base64String = base64Encode(bytes);
+    return 'data:$contentType;base64,$base64String';
   }
 }
