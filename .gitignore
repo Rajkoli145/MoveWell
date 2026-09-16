@@ -54,3 +54,4 @@ app.*.map.json
 **/service-account*.json
 **/*firebase-adminsdk*.json
 VIVA_GUIDE.md
+ARCHITECTURE_DEEP_DIVE.md
