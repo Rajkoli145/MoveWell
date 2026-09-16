@@ -238,6 +238,28 @@ void main() {
     expect(find.text('Support'), findsOneWidget);
   });
 
+  testWidgets('HomeScreen renders without overflow on 360px width mobile screens', (tester) async {
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: HomeScreen(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('MoveWell'), findsOneWidget);
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ProfileViewScreen renders properly with all profile sections', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

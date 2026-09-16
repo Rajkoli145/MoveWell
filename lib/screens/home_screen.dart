@@ -638,45 +638,61 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildTopAppBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // MoveWell Logo & Wordmark
-          Row(
-            children: [
-              Image.asset(AppAssets.logo, width: 38, height: 38),
-              const SizedBox(width: 9),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'MoveWell',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.2,
-                      color: Palette.ink,
-                    ),
+          // MoveWell Logo & Wordmark (Responsive & flexible to prevent overflow on small screens)
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(AppAssets.logo, width: 36, height: 36),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'MoveWell',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                            color: Palette.ink,
+                          ),
+                        ),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'A HEALTHIER YOU, EVERYDAY',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: const Color(0xFF7B91A6),
+                          ),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    'A HEALTHIER YOU, EVERYDAY',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.4,
-                      color: const Color(0xFF7B91A6),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
 
           // Top Actions: Search, Notification Bell & Avatar
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Search Icon Button
               GestureDetector(
@@ -690,20 +706,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  width: 42,
-                  height: 42,
+                  width: 38,
+                  height: 38,
                   decoration: const BoxDecoration(
                     color: Color(0xFFE8F2FA),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.search_rounded,
-                    size: 22,
+                    size: 20,
                     color: Palette.ink,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
 
               // Notification Bell with Badge
               GestureDetector(
@@ -718,8 +734,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  width: 42,
-                  height: 42,
+                  width: 38,
+                  height: 38,
                   decoration: const BoxDecoration(
                     color: Color(0xFFE8F2FA),
                     shape: BoxShape.circle,
@@ -729,15 +745,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Icon(
                         Icons.notifications_none_rounded,
-                        size: 22,
+                        size: 20,
                         color: Palette.ink,
                       ),
                       Positioned(
-                        top: 9,
-                        right: 11,
+                        top: 8,
+                        right: 9,
                         child: Container(
-                          width: 7.5,
-                          height: 7.5,
+                          width: 7,
+                          height: 7,
                           decoration: BoxDecoration(
                             color: const Color(0xFF2563EB),
                             shape: BoxShape.circle,
@@ -749,7 +765,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
 
               // Clean User Profile Avatar (Tappable to open ProfileViewScreen)
               GestureDetector(
@@ -769,8 +785,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  width: 42,
-                  height: 42,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
@@ -1098,16 +1114,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSectionHeader({required String title, VoidCallback? onViewAll}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 17.5,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-            color: Palette.ink,
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 17.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+              color: Palette.ink,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: onViewAll,
           behavior: HitTestBehavior.opaque,
@@ -1275,8 +1297,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Start Workout Interactive SlideActionPillButton (Draggable & Hold-to-slide, petite compact size)
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: 140,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 140),
                     child: SlideActionPillButton(
                       height: 28,
                       fontSize: 10,
@@ -1515,25 +1537,37 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(index: 0, icon: Icons.home_rounded, label: 'Home'),
-              _buildNavItem(
-                index: 1,
-                icon: Icons.auto_stories_outlined,
-                label: 'Resources',
+              Expanded(
+                child: _buildNavItem(
+                  index: 0,
+                  icon: Icons.home_rounded,
+                  label: 'Home',
+                ),
               ),
-              _buildNavItem(
-                index: 2,
-                icon: Icons.favorite_border_rounded,
-                label: 'Favorite',
+              Expanded(
+                child: _buildNavItem(
+                  index: 1,
+                  icon: Icons.auto_stories_outlined,
+                  label: 'Resources',
+                ),
               ),
-              _buildNavItem(
-                index: 3,
-                icon: Icons.support_outlined,
-                label: 'Support',
+              Expanded(
+                child: _buildNavItem(
+                  index: 2,
+                  icon: Icons.favorite_border_rounded,
+                  label: 'Favorite',
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  index: 3,
+                  icon: Icons.support_outlined,
+                  label: 'Support',
+                ),
               ),
             ],
           ),
@@ -1587,7 +1621,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFFE0F2FE) : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
@@ -1601,14 +1635,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF7B91A6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF7B91A6),
+              ),
+              maxLines: 1,
             ),
           ),
         ],
