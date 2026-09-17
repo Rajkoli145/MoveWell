@@ -1,4 +1,4 @@
-# 🏃‍♂️ MoveWell — Intelligent Fitness & Workout Tracker
+# MoveWell — Intelligent Fitness & Workout Tracker
 
 <div align="center">
 
@@ -11,30 +11,22 @@
   </p>
 
   <p align="center">
-    <a href="#-key-features">Features</a> •
-    <a href="#-design-description--uiux-philosophy">Design System</a> •
-    <a href="#-app-showcase">Screenshots</a> •
-    <a href="#-system-architecture">Architecture</a> •
-    <a href="#-getting-started">Getting Started</a> •
-    <a href="#-backend-api-reference">API Reference</a>
+    <a href="#key-features">Features</a> •
+    <a href="#design-description--uiux-philosophy">Design System</a> •
+    <a href="#app-showcase">Screenshots</a> •
+    <a href="#system-architecture">Architecture</a> •
+    <a href="#getting-started">Getting Started</a> •
+    <a href="#backend-api-reference">API Reference</a>
   </p>
 
   <p align="center">
-    <!-- Flutter -->
     <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
-    <!-- Dart -->
     <img src="https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart" />
-    <!-- TypeScript -->
     <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-    <!-- Node.js -->
     <img src="https://img.shields.io/badge/Node.js-22+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
-    <!-- Express -->
     <img src="https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
-    <!-- Firebase -->
     <img src="https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
-    <!-- Tests -->
-    <img src="https://img.shields.io/badge/Tests-16%2F16%20Passing-brightgreen?style=for-the-badge&logo=checkmarx" alt="Tests" />
-    <!-- Platforms -->
+    <img src="https://img.shields.io/badge/Tests-16%2F16%20Passing-brightgreen?style=for-the-badge" alt="Tests" />
     <img src="https://img.shields.io/badge/Platforms-iOS%20%7C%20Android%20%7C%20Web-lightgrey?style=for-the-badge" alt="Platforms" />
   </p>
 
@@ -42,29 +34,29 @@
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Design Description & UI/UX Philosophy](#-design-description--uiux-philosophy)
-- [Key Features](#-key-features)
-- [App Showcase](#-app-showcase)
-- [System Architecture](#-system-architecture)
-- [Repository Structure](#-repository-structure)
-- [Getting Started](#-getting-started)
+- [Overview](#overview)
+- [Design Description & UI/UX Philosophy](#design-description--uiux-philosophy)
+- [Key Features](#key-features)
+- [App Showcase](#app-showcase)
+- [System Architecture](#system-architecture)
+- [Repository Structure](#repository-structure)
+- [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [1. Firebase Setup](#1-firebase-setup)
   - [2. Backend Setup](#2-backend-setup)
   - [3. Flutter Setup & Launch](#3-flutter-setup--launch)
-- [Backend API Reference](#-backend-api-reference)
-- [Security & Architecture Highlights](#-security--architecture-highlights)
-- [Testing](#-testing)
-- [Contributing & License](#-contributing--license)
+- [Backend API Reference](#backend-api-reference)
+- [Security & Architecture Highlights](#security--architecture-highlights)
+- [Testing](#testing)
+- [License & Attribution](#license--attribution)
 
 ---
 
-## 🌟 Overview
+## Overview
 
-**MoveWell** bridges the gap between aggressive, intimidating gym trackers and mindful daily wellness. It delivers an intuitive, personalized workout and health experience:
+MoveWell bridges the gap between aggressive, intimidating gym trackers and mindful daily wellness. It delivers an intuitive, personalized workout and health experience:
 
 - **Personalized Onboarding**: An 8-step assessment calculating personalized caloric and macronutrient targets based on biometric input.
 - **Enterprise-Grade Security**: Complete client-server separation with a zero-client-secret architecture. Device clients authenticate via Firebase, exchanging short-lived ID tokens with an Express/TypeScript backend utilizing the Firebase Admin SDK.
@@ -72,7 +64,7 @@
 
 ---
 
-## 🎨 Design Description & UI/UX Philosophy
+## Design Description & UI/UX Philosophy
 
 MoveWell's visual language departs from conventional "hyper-aggressive" neon-and-black fitness apps. Instead, it adopts a **calming, Nordic athletic minimalism**—designed to reduce friction, eliminate cognitive overload, and foster sustainable daily habits.
 
@@ -108,20 +100,20 @@ MoveWell's visual language departs from conventional "hyper-aggressive" neon-and
 
 ---
 
-## ⚡ Key Features
+## Key Features
 
 | Category | Highlights |
 | :--- | :--- |
-| **🔐 Authentication** | • Email & Password registration with display name syncing<br>• One-tap Google Sign-In (iOS, Android, Web)<br>• Secure password-reset flow with email verification<br>• Persistent local session recovery |
-| **📋 Guided Onboarding** | • Interactive 8-step setup flow: Gender ➔ Age ➔ Height ➔ Weight ➔ Activity Level ➔ Fitness Goal ➔ AI Metric Assessment ➔ Completion<br>• State-machine guards preventing direct skips before profile completion |
-| **📊 Dashboard & Metrics** | • Concentric progress rings for Active Calories, Daily Steps, and Water Intake<br>• Upcoming scheduled workouts and personalized daily routines<br>• Health insight articles and motivational milestones |
-| **🏋️ Workout Engine** | • Multi-tier categorisation: Cardio, Strength, Mobility, and Yoga<br>• Equipment, muscle group, and difficulty filters (Beginner, Intermediate, Advanced)<br>• Guided workout session timers and animated exercise cards |
-| **🥗 Nutrition & Hydration** | • Daily macronutrient targets: Protein, Carbohydrates, and Healthy Fats<br>• Interactive one-tap water hydration tracker<br>• Balanced meal recommendations and healthy recipe directory |
-| **👤 Profile & Preferences** | • Camera capture & Photo Library avatar updates with runtime permission guards<br>• Editable body metrics with automatic BMI recalculation<br>• Notification preference management and security settings |
+| **Authentication** | • Email & Password registration with display name syncing<br>• One-tap Google Sign-In (iOS, Android, Web)<br>• Secure password-reset flow with email verification<br>• Persistent local session recovery |
+| **Guided Onboarding** | • Interactive 8-step setup flow: Gender -> Age -> Height -> Weight -> Activity Level -> Fitness Goal -> AI Metric Assessment -> Completion<br>• State-machine guards preventing direct skips before profile completion |
+| **Dashboard & Metrics** | • Concentric progress rings for Active Calories, Daily Steps, and Water Intake<br>• Upcoming scheduled workouts and personalized daily routines<br>• Health insight articles and motivational milestones |
+| **Workout Engine** | • Multi-tier categorization: Cardio, Strength, Mobility, and Yoga<br>• Equipment, muscle group, and difficulty filters (Beginner, Intermediate, Advanced)<br>• Guided workout session timers and animated exercise cards |
+| **Nutrition & Hydration** | • Daily macronutrient targets: Protein, Carbohydrates, and Healthy Fats<br>• Interactive one-tap water hydration tracker<br>• Balanced meal recommendations and healthy recipe directory |
+| **Profile & Preferences** | • Camera capture & Photo Library avatar updates with runtime permission guards<br>• Editable body metrics with automatic BMI recalculation<br>• Notification preference management and security settings |
 
 ---
 
-## 📱 App Showcase
+## App Showcase
 
 <div align="center">
   <table>
@@ -152,26 +144,26 @@ MoveWell's visual language departs from conventional "hyper-aggressive" neon-and
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 MoveWell enforces a strict **Zero-Client-Secret Architecture**. The mobile client never receives or stores administrative credentials. All database writes are guarded by an authenticated Node.js / TypeScript microservice.
 
 ```mermaid
 flowchart TD
-    subgraph Client["📱 Flutter Multiplatform Client"]
+    subgraph Client["Flutter Multiplatform Client"]
         UI["UI Layer (Material 3 + Custom Widgets)"]
         AUTH_SVC["AuthService (firebase_auth + google_sign_in)"]
         PROFILE_API["ProfileApi (HTTP client)"]
         PHOTO_SVC["ProfilePhotoService (image_picker + storage)"]
     end
 
-    subgraph FirebaseCloud["🔥 Firebase Cloud Services"]
+    subgraph FirebaseCloud["Firebase Cloud Services"]
         FAUTH["Firebase Authentication (ID Token Issuer)"]
         FSTORE[("Cloud Firestore (Database)")]
         FSTORAGE["Firebase Storage (Avatar Assets)"]
     end
 
-    subgraph Backend["🛡️ Node.js / TypeScript Backend"]
+    subgraph Backend["Node.js / TypeScript Backend"]
         SERVER["Express 5 Server (Helmet + CORS)"]
         AUTH_MW["Auth Middleware (verifyIdToken)"]
         VALIDATOR["Zod Request Validator"]
@@ -201,7 +193,7 @@ flowchart TD
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
 Fitness-Workout-App/
@@ -245,7 +237,7 @@ Fitness-Workout-App/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -260,7 +252,7 @@ Fitness-Workout-App/
 ### 1. Firebase Setup
 
 1. Create a project in the [Firebase Console](https://console.firebase.google.com/).
-2. In **Authentication** ➔ **Sign-in method**, enable **Email/Password** and **Google**.
+2. In **Authentication** -> **Sign-in method**, enable **Email/Password** and **Google**.
 3. Create a **Cloud Firestore** database.
 4. Deploy the deny-by-default rules located in `backend/firestore.rules`:
    ```bash
@@ -270,7 +262,7 @@ Fitness-Workout-App/
    ```bash
    firebase deploy --only storage
    ```
-6. Download the **Admin Service Account Key** (Project Settings ➔ Service accounts ➔ Generate new private key) and store it securely on your machine (outside of version control).
+6. Download the **Admin Service Account Key** (Project Settings -> Service accounts -> Generate new private key) and store it securely on your machine (outside of version control).
 
 ---
 
@@ -333,7 +325,7 @@ curl http://localhost:8080/health
      "BACKEND_URL": "http://127.0.0.1:8080"
    }
    ```
-   > 💡 **Tip**: For Android emulators, set `BACKEND_URL` to `http://10.0.2.2:8080`. For physical devices on the same Wi-Fi network, use your machine's local IP address (e.g. `http://192.168.1.50:8080`).
+   > **Note**: For Android emulators, set `BACKEND_URL` to `http://10.0.2.2:8080`. For physical devices on the same Wi-Fi network, use your machine's local IP address (e.g. `http://192.168.1.50:8080`).
 
 3. Fetch dependencies and launch the app:
    ```bash
@@ -343,7 +335,7 @@ curl http://localhost:8080/health
 
 ---
 
-## 📡 Backend API Reference
+## Backend API Reference
 
 All `/api/*` endpoints require a valid Firebase ID Token passed in the `Authorization` header:
 ```http
@@ -352,10 +344,10 @@ Authorization: Bearer <Firebase_ID_Token>
 
 | Method | Route | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/health` | Public service health check | ❌ |
-| `POST` | `/api/users/sync` | Creates or syncs an authenticated user record after login | ✅ |
-| `GET` | `/api/profile` | Fetches the complete profile and metrics for the caller | ✅ |
-| `PUT` | `/api/profile` | Validates and updates profile attributes (name, metrics, goals, preferences) | ✅ |
+| `GET` | `/health` | Public service health check | No |
+| `POST` | `/api/users/sync` | Creates or syncs an authenticated user record after login | Yes |
+| `GET` | `/api/profile` | Fetches the complete profile and metrics for the caller | Yes |
+| `PUT` | `/api/profile` | Validates and updates profile attributes (name, metrics, goals, preferences) | Yes |
 
 ### Profile Payload Schema Example (`PUT /api/profile`)
 ```json
@@ -376,7 +368,7 @@ Authorization: Bearer <Firebase_ID_Token>
 
 ---
 
-## 🛡️ Security & Architecture Highlights
+## Security & Architecture Highlights
 
 1. **No Sensitive Keys in Version Control**:
    `lib/config/firebase_config.dart` uses compile-time environment injection (`--dart-define-from-file`), ensuring zero API keys or credentials are ever committed to Git.
@@ -387,7 +379,7 @@ Authorization: Bearer <Firebase_ID_Token>
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Both the client application and the backend service feature comprehensive automated test suites.
 
@@ -397,13 +389,13 @@ flutter test
 ```
 ```text
 00:01 +16: All tests passed!
-✓ MoveWell renders the launch experience
-✓ SlideActionPillButton handles drags and hold-to-complete
-✓ AuthScreen renders login and registration components
-✓ SetupFlowNavigator executes full 8-step onboarding
-✓ HomeScreen renders without overflow on 360px mobile viewports
-✓ EditProfileScreen supports photo picking and input editing
-✓ NutritionScreen & WorkoutScreen verify macro calculations and filters
+MoveWell renders the launch experience
+SlideActionPillButton handles drags and hold-to-complete
+AuthScreen renders login and registration components
+SetupFlowNavigator executes full 8-step onboarding
+HomeScreen renders without overflow on 360px mobile viewports
+EditProfileScreen supports photo picking and input editing
+NutritionScreen & WorkoutScreen verify macro calculations and filters
 ```
 
 ### Backend Tests
@@ -415,8 +407,8 @@ npm run typecheck
 
 ---
 
-## 📄 License & Attribution
+## License & Attribution
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-Developed with ❤️ for mindful health and movement.
+Developed for mindful health and movement.
