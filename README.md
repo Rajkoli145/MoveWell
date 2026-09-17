@@ -174,16 +174,16 @@ flowchart TD
     UI --> PROFILE_API
     UI --> PHOTO_SVC
 
-    AUTH_SVC -->|Sign In / Up| FAUTH
-    FAUTH -->|Bearer ID Token| AUTH_SVC
-    PHOTO_SVC -->|Upload Avatar| FSTORAGE
+    AUTH_SVC -->|"Sign In or Sign Up"| FAUTH
+    FAUTH -->|"Issue Bearer ID Token"| AUTH_SVC
+    PHOTO_SVC -->|"Upload Avatar"| FSTORAGE
 
-    PROFILE_API -->|GET / PUT with Bearer Token| SERVER
+    PROFILE_API -->|"GET / PUT with Bearer Token"| SERVER
     SERVER --> AUTH_MW
-    AUTH_MW -->|Verify Token Cryptographically| FAUTH
+    AUTH_MW -->|"Verify Token Cryptographically"| FAUTH
     AUTH_MW --> VALIDATOR
     VALIDATOR --> ADMIN_SDK
-    ADMIN_SDK -->|Scoped Write / Read users/{uid}| FSTORE
+    ADMIN_SDK -->|"Scoped Read and Write (users/UID)"| FSTORE
 ```
 
 ### Security Highlights
